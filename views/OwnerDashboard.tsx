@@ -30,7 +30,7 @@ const unitPerformanceData = [
   { name: 'Ocean View Penthouse', revenue: 12000000, bookings: 4, rate: 60 },
 ];
 
-type ModuleType = 'overview' | 'inventory' | 'bookings' | 'finance' | 'team' | 'profile' | 'marketing' | 'reviews' | 'analytics' | 'audit' | 'subscription';
+type ModuleType = 'overview' | 'inventory' | 'bookings' | 'finance' | 'team' | 'profile' | 'marketing' | 'reviews' | 'analytics' | 'activity' | 'subscription';
 
 interface OwnerDashboardProps {
   businessId: string;
@@ -57,6 +57,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
   const [units, setUnits] = useState<Unit[]>(MOCK_UNITS.filter(u => u.businessId === business.id));
   const [bookings, setBookings] = useState<Booking[]>(MOCK_BOOKINGS.filter(b => b.businessId === business.id));
   const [localTransactions, setLocalTransactions] = useState<Transaction[]>(MOCK_TRANSACTIONS.filter(t => t.businessId === business.id));
+  const [localAuditLogs, setLocalAuditLogs] = useState<AuditLog[]>(MOCK_AUDIT_LOGS);
   
   // Reputation (Reviews) State
   const [localReviews, setLocalReviews] = useState<Review[]>(MOCK_REVIEWS.filter(r => r.businessId === business.id));
@@ -110,11 +111,26 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
     setInsights(text || "AI Insights currently unavailable.");
   };
 
+  const logActivity = (action: string, target: string, type: AuditLog['type'] = 'management') => {
+    const newLog: AuditLog = {
+      id: `log-${Date.now()}`,
+      actorId: currentUser?.id || 'unknown',
+      actorName: currentUser?.name || 'Unknown',
+      actorRole: currentUser?.role || UserRole.BUSINESS_OWNER,
+      action,
+      target,
+      type,
+      timestamp: new Date().toISOString().replace('T', ' ').split('.')[0]
+    };
+    setLocalAuditLogs(prev => [newLog, ...prev]);
+  };
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     await new Promise(r => setTimeout(r, 1000));
     onUpdateUser({ name: profileName, phoneNumber: profilePhone });
+    logActivity('Updated Personal Profile', 'User Profile Node');
     setIsSaving(false);
     alert('Identitas Node Terupdate. Sinkronisasi Berhasil.');
   };
@@ -123,6 +139,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
     e.preventDefault();
     setIsSaving(true);
     await new Promise(r => setTimeout(r, 1000));
+    logActivity('Updated Business Identity', business.name);
     setIsSaving(false);
     alert('Identitas Bisnis Berhasil Disimpan.');
   };
@@ -149,6 +166,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
 
     if (editingUnit) {
       setUnits(prev => prev.map(u => u.id === editingUnit.id ? { ...u, ...unitData } : u));
+      logActivity(`Updated Unit Node: ${unitData.name}`, 'Asset Matrix');
       alert('Produk Bisnis Berhasil Diperbarui.');
     } else {
       const newUnit: Unit = {
@@ -166,6 +184,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
         policies: unitData.policies as any
       };
       setUnits(prev => [...prev, newUnit]);
+      logActivity(`Deployed New Unit Node: ${unitData.name}`, 'Asset Matrix');
       alert('Produk Bisnis Baru Berhasil Ditambahkan.');
     }
     setIsUnitModalOpen(false);
@@ -173,12 +192,16 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
   };
 
   const handleToggleUnitAvailability = (unitId: string) => {
+    const unit = units.find(u => u.id === unitId);
     setUnits(prev => prev.map(u => u.id === unitId ? { ...u, available: !u.available } : u));
+    logActivity(`Toggled Availability for ${unit?.name}`, 'Asset Matrix');
   };
 
   const handleDeleteUnit = (unitId: string) => {
+    const unit = units.find(u => u.id === unitId);
     if (confirm('Hapus produk/unit ini secara permanen?')) {
       setUnits(prev => prev.filter(u => u.id !== unitId));
+      logActivity(`Purged Unit Node: ${unit?.name}`, 'Asset Matrix');
     }
   };
 
@@ -198,20 +221,26 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
       description: formData.get('description') as string
     };
     setPromotions(prev => [newPromo, ...prev]);
+    logActivity(`Created Promo Node: ${newPromo.code}`, 'Growth Hub');
     setIsPromoModalOpen(false);
     alert('Strategi Promosi Baru Diaktifkan.');
   };
 
   const handleTogglePromo = (id: string) => {
+    const promo = promotions.find(p => p.id === id);
     setPromotions(prev => prev.map(p => p.id === id ? { ...p, isActive: !p.isActive } : p));
+    logActivity(`Toggled Promo Status: ${promo?.code}`, 'Growth Hub');
   };
 
   const handleTogglePricingRule = (id: string) => {
+    const rule = pricingRules.find(r => r.id === id);
     setPricingRules(prev => prev.map(r => r.id === id ? { ...r, isActive: !r.isActive } : r));
+    logActivity(`Toggled Pricing Protocol: ${rule?.name}`, 'Growth Hub');
   };
 
   const handleRequestFeatured = () => {
     setBusiness(prev => ({ ...prev, isFeaturedRequested: true }));
+    logActivity('Requested Featured Boost', 'Marketplace Governance');
     alert('Permintaan Featured Listing telah dikirim ke Pusat Tata Kelola.');
   };
 
@@ -227,14 +256,16 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
       businessId: business.id,
       avatar: `https://i.pravatar.cc/150?u=${Date.now()}`,
       createdAt: new Date().toISOString().split('T')[0],
-      permissions: ['manage_bookings'] // Default permission
+      permissions: ['manage_bookings'] 
     };
     setStaffList(prev => [...prev, newStaff]);
+    logActivity(`Enrolled Operator Node: ${newStaff.name}`, 'Operations Team');
     setIsAddStaffModalOpen(false);
     alert(`Node Operator ${newStaff.name} berhasil dideploy.`);
   };
 
   const handleToggleStaffPermission = (staffId: string, permission: string) => {
+    const staff = staffList.find(s => s.id === staffId);
     setStaffList(prev => prev.map(s => {
       if (s.id !== staffId) return s;
       const current = s.permissions || [];
@@ -243,18 +274,23 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
         : [...current, permission];
       return { ...s, permissions: updated };
     }));
+    logActivity(`Modified Authority Matrix for ${staff?.name}`, 'Operations Team');
   };
 
   const handleToggleStaffStatus = (staffId: string) => {
+    const staff = staffList.find(s => s.id === staffId);
+    const isSuspending = !suspendedStaffIds.has(staffId);
     setSuspendedStaffIds(prev => {
       const next = new Set(prev);
       if (next.has(staffId)) next.delete(staffId);
       else next.add(staffId);
       return next;
     });
+    logActivity(`${isSuspending ? 'Suspended' : 'Restored'} Operator Node: ${staff?.name}`, 'Operations Team');
   };
 
   const handleResetStaffPassword = (name: string) => {
+    logActivity(`Dispatched Password Reset for ${name}`, 'Security Control');
     alert(`Reset link telah dikirim ke email ${name}.`);
   };
 
@@ -262,23 +298,27 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
   const handleSubmitReviewReply = (reviewId: string) => {
     if (!replyText.trim()) return;
     setLocalReviews(prev => prev.map(r => r.id === reviewId ? { ...r, ownerReply: replyText } : r));
+    logActivity(`Responded to Guest Feedback: ${reviewId}`, 'Guest Hub');
     setReplyingTo(null);
     setReplyText('');
     alert('Balasan berhasil dipublikasikan.');
   };
 
   const handleReportReview = (reviewId: string) => {
+    logActivity(`Flagged Review Node for Moderation: ${reviewId}`, 'Guest Hub', 'security');
     alert(`Review ${reviewId} telah dilaporkan untuk moderasi keamanan.`);
   };
 
   // Booking Actions
   const handleUpdateBookingStatus = (id: string, status: BookingStatus) => {
     setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
+    logActivity(`Transitioned Reservation ${id} to ${status}`, 'Booking Node');
     alert(`Status reservasi ${id} diperbarui menjadi ${status}.`);
   };
 
   const handleConfirmPayment = (bookingId: string) => {
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, verifiedPayment: true } : b));
+    logActivity(`Verified Payment Node: ${bookingId}`, 'Treasury Hub', 'financial');
     alert('Pembayaran diverifikasi secara manual. Treasury Node diperbarui.');
   };
 
@@ -303,6 +343,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
     };
     
     setBookings(prev => [newBooking, ...prev]);
+    logActivity(`Authorized Manual Walk-In: ${newBooking.id}`, 'Booking Node');
     setIsWalkInModalOpen(false);
     alert('Booking Manual Berhasil Didaftarkan.');
   };
@@ -319,8 +360,8 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
       { id: 'marketing', label: 'Growth & Ads', icon: 'fa-rocket', module: SystemModule.MARKETING },
       { id: 'profile', label: 'Brand Identity', icon: 'fa-id-card', module: null },
       { id: 'reviews', label: 'Guest Feedback', icon: 'fa-comment-dots', module: SystemModule.REVIEWS },
+      { id: 'activity', label: 'Activity Control', icon: 'fa-clock-rotate-left', module: null },
       { id: 'subscription', label: 'Plan & Billing', icon: 'fa-gem', module: null },
-      { id: 'audit', label: 'Security Logs', icon: 'fa-shield-halved', module: null },
     ];
     return items.filter(item => !item.module || activeModules.includes(item.module));
   }, [business.category, moduleConfigs]);
@@ -1679,6 +1720,117 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
     </div>
   );
 
+  const renderActivity = () => {
+    const recentActivity = [
+      { id: '1', title: 'New Reservation', detail: 'Alice Guest booked Deluxe Suite 201', time: '2m ago', type: 'booking', icon: 'fa-calendar-plus', color: 'text-emerald-500' },
+      { id: '2', title: 'Payment Received', detail: 'Verification success for #BK-WALK-17355', time: '15m ago', type: 'payment', icon: 'fa-money-bill-transfer', color: 'text-indigo-500' },
+      { id: '3', title: 'Staff Check-In', detail: 'Sarah Staff authorized guest G-NODE-99', time: '1h ago', type: 'system', icon: 'fa-user-check', color: 'text-violet-500' },
+    ];
+
+    return (
+      <div className="space-y-12 animate-fade-up">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          <div>
+             <h3 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Activity Control Node</h3>
+             <p className="text-slate-400 text-sm font-medium">Real-time surveillance of ecosystem events, notifications, and audit trails.</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          <div className="lg:col-span-1 space-y-8">
+             <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm space-y-8">
+                <div className="flex items-center justify-between">
+                   <h4 className="text-xl font-black text-slate-900 tracking-tight uppercase">Live Activity Pulse</h4>
+                   <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>
+                </div>
+                <div className="space-y-6">
+                   {recentActivity.map(act => (
+                      <div key={act.id} className="flex gap-5 group cursor-pointer">
+                         <div className={`w-12 h-12 rounded-2xl bg-slate-50 ${act.color} flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform`}>
+                            <i className={`fas ${act.icon}`}></i>
+                         </div>
+                         <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-start mb-1">
+                               <p className="text-xs font-black text-slate-900 uppercase truncate">{act.title}</p>
+                               <span className="text-[8px] font-black text-slate-300 uppercase shrink-0">{act.time}</span>
+                            </div>
+                            <p className="text-[10px] text-slate-500 font-medium leading-tight">{act.detail}</p>
+                         </div>
+                      </div>
+                   ))}
+                </div>
+                <button className="w-full py-4 bg-slate-50 text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:text-indigo-600 transition-colors">Mark All Read</button>
+             </div>
+
+             <div className="bg-slate-950 p-10 rounded-[48px] shadow-2xl text-white space-y-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl"></div>
+                <h4 className="text-xl font-black tracking-tight uppercase relative z-10">Security Compliance</h4>
+                <div className="space-y-6 relative z-10">
+                   <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-indigo-400">
+                         <i className="fas fa-shield-halved"></i>
+                      </div>
+                      <div>
+                         <p className="text-[10px] font-black uppercase text-indigo-300">Identity Integrity</p>
+                         <p className="text-xs font-bold">100% Operational</p>
+                      </div>
+                   </div>
+                   <p className="text-[10px] text-white/40 leading-relaxed">System logs all administrative overrides and credential access for forensic verification.</p>
+                </div>
+             </div>
+          </div>
+
+          <div className="lg:col-span-2 space-y-8">
+             <div className="bg-white rounded-[48px] border border-slate-100 shadow-sm overflow-hidden">
+                <div className="p-10 border-b border-slate-50 bg-slate-50/30 flex items-center justify-between">
+                   <div>
+                      <h4 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">Forensic Audit Ledger</h4>
+                      <p className="text-slate-400 text-xs font-medium">Immutable trace of all data modifications and internal ops.</p>
+                   </div>
+                   <div className="flex gap-2">
+                      <button className="p-3 bg-white border border-slate-200 text-slate-400 rounded-xl hover:text-indigo-600 transition-all shadow-sm">
+                         <i className="fas fa-filter text-xs"></i>
+                      </button>
+                   </div>
+                </div>
+                <div className="overflow-x-auto">
+                   <table className="w-full text-left">
+                      <thead className="bg-slate-50 border-b border-slate-100">
+                         <tr>
+                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Protocol Action</th>
+                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Actor Node</th>
+                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Temporal Node</th>
+                         </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50 font-mono">
+                         {localAuditLogs.map(log => (
+                            <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
+                               <td className="px-8 py-5">
+                                  <p className="text-[11px] font-black text-slate-700 uppercase">{log.action}</p>
+                                  <p className="text-[9px] text-slate-400 uppercase font-bold">{log.target}</p>
+                               </td>
+                               <td className="px-8 py-5">
+                                  <div className="flex items-center gap-2">
+                                     <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
+                                     <span className="text-[11px] font-black text-indigo-600 uppercase">{log.actorName}</span>
+                                  </div>
+                               </td>
+                               <td className="px-8 py-5 text-[10px] text-slate-400 font-bold">{log.timestamp}</td>
+                            </tr>
+                         ))}
+                      </tbody>
+                   </table>
+                </div>
+                <div className="p-8 border-t border-slate-50 text-center">
+                   <button className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline">View full forensic report history</button>
+                </div>
+             </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderSubscription = () => {
     const plans = [
       { id: 'BASIC', name: 'Basic Access', price: 'Free', commission: '15%', units: '10 Units', features: ['Standard Support', 'Core Modules', 'Manual Payouts'], color: 'text-slate-400', bg: 'bg-slate-50' },
@@ -2104,14 +2256,9 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
             {activeModule === 'team' && renderTeam()}
             {activeModule === 'reviews' && renderReviews()}
             {activeModule === 'analytics' && renderAnalytics()}
+            {activeModule === 'activity' && renderActivity()}
             {activeModule === 'subscription' && renderSubscription()}
             {activeModule === 'profile' && renderProfile()}
-            {['audit'].includes(activeModule) && (
-              <div className="py-40 text-center animate-fade-up">
-                 <h3 className="text-3xl font-black text-slate-900 mb-4 uppercase tracking-tighter">{activeModule} Core Node</h3>
-                 <p className="text-slate-500 font-medium max-w-md mx-auto">Interface for {activeModule} management.</p>
-              </div>
-            )}
          </div>
       </main>
     </div>
