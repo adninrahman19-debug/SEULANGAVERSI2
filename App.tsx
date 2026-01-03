@@ -82,10 +82,8 @@ const App: React.FC = () => {
     } else if (view === 'super-admin' && !subView) {
       setAdminSubView('overview');
     }
-    // Handle link from Layout profile settings
-    if (view === 'guest-dash' && subView === 'profile') {
-        // Just let it fall through to renderView
-    }
+    // Set auto-scrolling to top on navigation
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const navigateToProperty = (property: Business) => {
@@ -113,7 +111,15 @@ const App: React.FC = () => {
   const renderView = () => {
     switch (currentView) {
       case 'landing':
-        return <LandingPage onNavigate={handleNavigate} onSelectProperty={navigateToProperty} />;
+        // Landing page handles its own navigation and structure
+        return (
+          <LandingPage 
+            onNavigate={handleNavigate} 
+            onSelectProperty={navigateToProperty} 
+            language={language}
+            onLanguageChange={handleLanguageChange}
+          />
+        );
       case 'owner-dash':
         return <OwnerDashboard businessId={currentUser?.businessId || "b1"} moduleConfigs={moduleConfigs} currentUser={currentUser} onUpdateUser={handleUpdateUser} />;
       case 'super-admin':
@@ -131,8 +137,7 @@ const App: React.FC = () => {
       case 'staff-dash':
         return <StaffDashboard currentUser={currentUser} onUpdateUser={handleUpdateUser} />;
       case 'guest-dash':
-        // Fix: Passing handleNavigate to GuestDashboard
-        return <GuestDashboard currentUser={currentUser} onUpdateUser={handleUpdateUser} onNavigate={handleNavigate} initialTab={adminSubView === 'profile' ? 'profile' : 'overview'} />;
+        return <GuestDashboard currentUser={currentUser} onUpdateUser={handleUpdateUser} onNavigate={handleNavigate} initialTab={adminSubView === 'profile' ? 'profile' : 'overview'} language={language} />;
       case 'property-detail':
         return selectedProperty ? (
           <PropertyDetail 
@@ -141,16 +146,21 @@ const App: React.FC = () => {
             currentUser={currentUser}
             onLoginRequired={() => handleNavigate('login')}
           />
-        ) : <LandingPage onNavigate={handleNavigate} onSelectProperty={navigateToProperty} />;
+        ) : <LandingPage onNavigate={handleNavigate} onSelectProperty={navigateToProperty} language={language} onLanguageChange={handleLanguageChange} />;
       case 'explore':
         return <Marketplace onSelectProperty={navigateToProperty} />;
       case 'login':
       case 'register':
         return <Auth onLogin={handleLogin} onNavigateLanding={() => handleNavigate('landing')} />;
       default:
-        return <LandingPage onNavigate={handleNavigate} onSelectProperty={navigateToProperty} />;
+        return <LandingPage onNavigate={handleNavigate} onSelectProperty={navigateToProperty} language={language} onLanguageChange={handleLanguageChange} />;
     }
   };
+
+  // Skip Layout wrapping for landing page and auth views to allow full-width marketing design
+  if (currentView === 'landing' || currentView === 'login' || currentView === 'register') {
+    return renderView();
+  }
 
   return (
     <Layout 

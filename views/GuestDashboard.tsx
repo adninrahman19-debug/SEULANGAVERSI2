@@ -38,13 +38,14 @@ interface GuestDashboardProps {
   onUpdateUser: (data: Partial<User>) => void;
   initialTab?: GuestTab;
   onNavigate: (view: string, subView?: string) => void;
+  language: 'id' | 'en';
 }
 
 const MOCK_INQUIRIES: Inquiry[] = [
   { id: 'inq1', guestId: 'u4', businessId: 'b1', type: 'visit', status: 'responded', message: 'I would like to visit the unit tomorrow at 10 AM.', createdAt: '2024-12-28' },
 ];
 
-export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onUpdateUser, initialTab = 'overview', onNavigate }) => {
+export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onUpdateUser, initialTab = 'overview', onNavigate, language }) => {
   const [activeTab, setActiveTab] = useState<GuestTab>(initialTab);
   const [profileSubTab, setProfileSubTab] = useState<ProfileSubTab>('personal');
   const [quickSearch, setQuickSearch] = useState('');
@@ -53,24 +54,108 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
   const user = currentUser || MOCK_USERS.find(u => u.id === 'u4')!;
   const [userBookings, setUserBookings] = useState<Booking[]>(MOCK_BOOKINGS.filter(b => b.guestId === user.id));
 
+  // --- Translation Dictionary ---
+  const d = {
+    id: {
+      activity: "Pusat Aktivitas",
+      welcome: "Selamat datang kembali",
+      search_p: "Cari hotel, villa, atau homestay...",
+      stat_upcoming: "Mendatang",
+      stat_messages: "Pesan",
+      stat_saved: "Disimpan",
+      stat_inquiries: "Inkuiri Aktif",
+      section_payments: "Status Transaksi Real-time",
+      btn_all_payments: "Semua Pembayaran",
+      checkin_card_title: "Smart Check-In",
+      checkin_card_desc: "Pastikan pembayaran settled untuk akses node unit.",
+      wishlist_title: "Simpanan Asset (Planning Hub)",
+      wishlist_desc: "Kurasi properti dan bandingkan spesifikasi.",
+      btn_compare: "Bandingkan",
+      btn_back_grid: "Kembali Ke Grid",
+      comparison_matrix: "Comparison Matrix",
+      reset_compare: "Reset Perbandingan",
+      price_pulse: "Price Pulse",
+      support_title: "Support & Help Center",
+      support_desc: "Temukan bantuan dan panduan operasional.",
+      faq_title: "Knowledge Hub (FAQ)",
+      guide_title: "Panduan Pengguna",
+      contact_title: "Kontak Bantuan",
+      contact_desc: "Pusat kendali operasional siap membantu 24/7.",
+      complaint_list: "Daftar Pengaduan",
+      btn_new_complaint: "Lapor Baru",
+      modal_complaint_title: "Layanan Pengaduan Formal",
+      modal_complaint_desc: "Sampaikan keluhan terkait kualitas layanan.",
+      form_subject: "Subjek Masalah",
+      form_detail: "Detail Kronologis",
+      form_object: "Pilih Objek Pengaduan",
+      maintenance_title: "Tiket Maintenance",
+      review_history: "Riwayat Ulasan",
+      btn_lodge: "Kirim Pengaduan Ke Admin",
+      empty_complaints: "Tidak ada pengaduan aktif"
+    },
+    en: {
+      activity: "Activity Hub",
+      welcome: "Welcome back",
+      search_p: "Search hotels, villas, or homestays...",
+      stat_upcoming: "Upcoming",
+      stat_messages: "Messages",
+      stat_saved: "Saved Items",
+      stat_inquiries: "Active Inquiries",
+      section_payments: "Real-time Transactions",
+      btn_all_payments: "All Payments",
+      checkin_card_title: "Smart Check-In",
+      checkin_card_desc: "Ensure payment is settled to receive unit node access.",
+      wishlist_title: "Asset Curation (Planning Hub)",
+      wishlist_desc: "Curate properties and compare technical specs.",
+      btn_compare: "Compare",
+      btn_back_grid: "Back to Grid",
+      comparison_matrix: "Comparison Matrix",
+      reset_compare: "Reset Comparison",
+      price_pulse: "Price Pulse",
+      support_title: "Support & Help Center",
+      support_desc: "Find assistance and operational guides.",
+      faq_title: "Knowledge Hub (FAQ)",
+      guide_title: "User Guides",
+      contact_title: "Contact Support",
+      contact_desc: "Our operational control center is live 24/7.",
+      complaint_list: "Complaint Registry",
+      btn_new_complaint: "Lodge New",
+      modal_complaint_title: "Formal Complaint Service",
+      modal_complaint_desc: "Lodge complaints regarding service quality.",
+      form_subject: "Issue Subject",
+      form_detail: "Chronological Detail",
+      form_object: "Select Complaint Object",
+      maintenance_title: "Maintenance Tickets",
+      review_history: "Review History",
+      btn_lodge: "Dispatch to Admin Node",
+      empty_complaints: "No active complaints found"
+    }
+  }[language];
+
   // Support & Help Center States
   const [userComplaints, setUserComplaints] = useState<Complaint[]>([
-    { id: 'cmp-101', guestId: user.id, businessId: 'b1', subject: 'Keterlambatan Pengembalian Deposit', message: 'Sudah 3 hari sejak check-out namun deposit belum kembali.', status: 'pending', createdAt: '2024-12-28' }
+    { id: 'cmp-101', guestId: user.id, businessId: 'b1', subject: language === 'id' ? 'Keterlambatan Pengembalian Deposit' : 'Deposit Refund Delay', message: language === 'id' ? 'Sudah 3 hari sejak check-out namun deposit belum kembali.' : 'It has been 3 days since check-out but deposit not received.', status: 'pending', createdAt: '2024-12-28' }
   ]);
   const [isComplaintModalOpen, setIsComplaintModalOpen] = useState(false);
   const [activeFaq, setActiveFaq] = useState<string | null>(null);
 
-  const faqData = [
-    { id: 'q1', q: 'Bagaimana cara melakukan pembatalan?', a: 'Anda dapat membatalkan pesanan melalui menu "Daftar Reservasi". Pastikan melakukan pembatalan minimal 48 jam sebelum check-in untuk pengembalian dana penuh.' },
-    { id: 'q2', q: 'Kapan saya mendapatkan kode akses unit?', a: 'Kode akses atau Smart Key akan aktif secara otomatis di Dashboard Anda setelah status pembayaran diverifikasi (Settled) oleh pihak treasury.' },
-    { id: 'q3', q: 'Metode pembayaran apa saja yang didukung?', a: 'Saat ini kami mendukung Transfer Bank manual, Virtual Account, dan saldo internal Seulanga.' },
-  ];
+  const faqData = useMemo(() => [
+    { 
+      id: 'q1', 
+      q: language === 'id' ? 'Bagaimana cara melakukan pembatalan?' : 'How do I perform a cancellation?', 
+      a: language === 'id' ? 'Anda dapat membatalkan pesanan melalui menu "Daftar Reservasi".' : 'You can cancel your order via the "My Bookings" menu.' 
+    },
+    { 
+      id: 'q2', 
+      q: language === 'id' ? 'Kapan saya mendapatkan kode akses unit?' : 'When will I get the unit access code?', 
+      a: language === 'id' ? 'Kode akses akan aktif setelah pembayaran diverifikasi.' : 'The access code will be activated once payment is verified.' 
+    },
+  ], [language]);
 
-  const guideData = [
-    { title: 'Check-in Digital', icon: 'fa-mobile-screen-button', desc: 'Panduan lengkap verifikasi ID hingga masuk unit.' },
-    { title: 'Keamanan Transaksi', icon: 'fa-shield-halved', desc: 'Cara memastikan pembayaran Anda aman dan terverifikasi.' },
-    { title: 'Fitur Perbandingan', icon: 'fa-code-compare', desc: 'Gunakan matrix untuk memilih properti terbaik.' },
-  ];
+  const guideData = useMemo(() => [
+    { title: language === 'id' ? 'Check-in Digital' : 'Digital Check-in', icon: 'fa-mobile-screen-button', desc: language === 'id' ? 'Panduan verifikasi ID.' : 'ID verification guide.' },
+    { title: language === 'id' ? 'Keamanan' : 'Security', icon: 'fa-shield-halved', desc: language === 'id' ? 'Protokol transaksi aman.' : 'Secure transaction protocol.' },
+  ], [language]);
 
   // Wishlist & Planning States
   const [comparingIds, setComparingIds] = useState<string[]>([]);
@@ -82,22 +167,12 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
     {
       id: 'c1',
       businessId: 'b1',
-      lastMessage: 'Tentu, handuk tambahan akan segera dikirim.',
+      lastMessage: language === 'id' ? 'Tentu, handuk tambahan akan segera dikirim.' : 'Sure, extra towels are on the way.',
       time: '10:45 AM',
       unreadCount: 1,
       messages: [
         { id: 'm1', senderId: 'u4', text: 'Halo, apakah saya bisa minta handuk tambahan?', timestamp: '10:30 AM', isRead: true },
         { id: 'm2', senderId: 'b1', text: 'Tentu, handuk tambahan akan segera dikirim.', timestamp: '10:45 AM', isRead: false },
-      ]
-    },
-    {
-      id: 'c2',
-      businessId: 'b2',
-      lastMessage: 'Terima kasih atas reservasi Anda.',
-      time: 'Yesterday',
-      unreadCount: 0,
-      messages: [
-        { id: 'm3', senderId: 'b2', text: 'Terima kasih atas reservasi Anda. Kami menunggu kedatangan Anda.', timestamp: 'Yesterday', isRead: true },
       ]
     }
   ]);
@@ -123,27 +198,16 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
   ]);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
 
-  // Payment States
-  const [selectedInvoice, setSelectedInvoice] = useState<Booking | null>(null);
-  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [uploadTargetId, setUploadTargetId] = useState<string | null>(null);
-
   // Identity States
   const [identityFile, setIdentityFile] = useState<File | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [sessions, setSessions] = useState([
     { id: 's1', device: 'Chrome on MacOS (This device)', location: 'Banda Aceh', status: 'Active Now', current: true },
-    { id: 's2', device: 'Safari on iPhone 15', location: 'Jakarta', status: 'Active 2h ago', current: false },
-    { id: 's3', device: 'Edge on Windows 11', location: 'Medan', status: 'Active yesterday', current: false },
   ]);
 
   // Activity State
   const [activities, setActivities] = useState<UserActivity[]>([
-    { id: 'a1', action: 'Daftar Reservasi Dibuat', target: 'Grand Seulanga Hotel', time: '2 jam yang lalu', icon: 'fa-calendar-plus', color: 'text-indigo-600' },
-    { id: 'a2', action: 'Wishlist Diperbarui', target: 'Pine Hill Guesthouse', time: '5 jam yang lalu', icon: 'fa-heart', color: 'text-rose-500' },
-    { id: 'a3', action: 'Profil Diperbarui', target: 'Identitas Digital', time: 'Kemarin', icon: 'fa-user-pen', color: 'text-emerald-500' },
-    { id: 'a4', action: 'Pencarian Properti', target: 'Kategori: Hotel', time: '2 hari yang lalu', icon: 'fa-magnifying-glass', color: 'text-slate-400' },
+    { id: 'a1', action: language === 'id' ? 'Daftar Reservasi Dibuat' : 'Reservation Created', target: 'Grand Seulanga Hotel', time: '2h ago', icon: 'fa-calendar-plus', color: 'text-indigo-600' },
   ]);
 
   // Profile Form States
@@ -171,7 +235,7 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
 
   const totalUnreadMessages = conversations.reduce((acc, curr) => acc + curr.unreadCount, 0);
 
-  // Support Actions
+  // Handlers
   const handleLodgeComplaint = (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget as HTMLFormElement);
@@ -186,106 +250,23 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
     };
     setUserComplaints(prev => [newComplaint, ...prev]);
     setIsComplaintModalOpen(false);
-    alert('Pengaduan formal telah diajukan ke governance node. Kami akan meninjau laporan Anda maksimal dalam 24 jam.');
+    alert(language === 'id' ? 'Pengaduan diajukan ke governance node.' : 'Complaint lodged to governance node.');
   };
 
-  // Wishlist Actions
   const toggleCompare = (id: string) => {
     setComparingIds(prev => {
       if (prev.includes(id)) return prev.filter(i => i !== id);
-      if (prev.length >= 3) {
-        alert("Batas maksimal komparasi adalah 3 properti.");
-        return prev;
-      }
+      if (prev.length >= 3) return prev;
       return [...prev, id];
     });
   };
 
-  const togglePriceAlert = (id: string) => {
-    setPriceAlerts(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else {
-        next.add(id);
-        alert(`Price Pulse diaktifkan untuk ${MOCK_BUSINESSES.find(b => b.id === id)?.name}. Kami akan memberitahu Anda jika ada perubahan harga signifikan.`);
-      }
-      return next;
-    });
-  };
-
-  // Messaging Actions
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!messageInput.trim() || !selectedChatId) return;
-
-    const newMessage: ChatMessage = {
-      id: `m-${Date.now()}`,
-      senderId: user.id,
-      text: messageInput,
-      timestamp: 'Just now',
-      isRead: true
-    };
-
-    setConversations(prev => prev.map(conv => 
-      conv.id === selectedChatId 
-        ? { ...conv, lastMessage: messageInput, time: 'Just now', messages: [...conv.messages, newMessage] } 
-        : conv
-    ));
+    const newMessage: ChatMessage = { id: `m-${Date.now()}`, senderId: user.id, text: messageInput, timestamp: 'Just now', isRead: true };
+    setConversations(prev => prev.map(conv => conv.id === selectedChatId ? { ...conv, lastMessage: messageInput, messages: [...conv.messages, newMessage] } : conv));
     setMessageInput('');
-  };
-
-  const handleAttachFile = () => {
-    const fakeAttachment = "image_reference_01.jpg";
-    const newMessage: ChatMessage = {
-      id: `m-file-${Date.now()}`,
-      senderId: user.id,
-      text: 'Mengirim lampiran...',
-      attachment: fakeAttachment,
-      timestamp: 'Just now',
-      isRead: true
-    };
-    if (!selectedChatId) return;
-    setConversations(prev => prev.map(conv => 
-      conv.id === selectedChatId 
-        ? { ...conv, lastMessage: 'Sent an attachment', time: 'Just now', messages: [...conv.messages, newMessage] } 
-        : conv
-    ));
-  };
-
-  // Control Actions
-  const handleCancelBooking = () => {
-    if (!selectedBooking) return;
-    setUserBookings(prev => prev.map(b => b.id === selectedBooking.id ? { ...b, status: BookingStatus.CANCELLED } : b));
-    setActivities(prev => [{ id: `act-${Date.now()}`, action: 'Permintaan Pembatalan', target: selectedBooking.id, time: 'Baru saja', icon: 'fa-ban', color: 'text-rose-500' }, ...prev]);
-    setIsCancelModalOpen(false);
-    setSelectedBooking(null);
-    alert('Permintaan pembatalan telah diproses oleh treasury node.');
-  };
-
-  const handleSubmitReview = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingReview) {
-       setUserReviews(prev => prev.map(r => r.id === editingReview.id ? { ...r, rating, comment } : r));
-       alert('Ulasan telah diperbarui.');
-       setEditingReview(null);
-    } else if (selectedBooking) {
-       const newReview: Review = {
-         id: `rv-${Date.now()}`,
-         businessId: selectedBooking.businessId,
-         guestId: user.id,
-         guestName: user.name,
-         rating,
-         comment,
-         status: 'pending',
-         createdAt: new Date().toISOString().split('T')[0]
-       };
-       setUserReviews(prev => [newReview, ...prev]);
-       alert('Ulasan Anda telah dipublikasikan. Terima kasih telah berkontribusi pada reputasi ekosistem.');
-    }
-    setIsReviewModalOpen(false);
-    setSelectedBooking(null);
-    setComment('');
-    setRating(5);
   };
 
   const handleReportProblem = (e: React.FormEvent) => {
@@ -295,14 +276,13 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
       id: `tk-${Date.now()}`,
       unitId: formData.get('unitId') as string,
       issue: formData.get('issue') as string,
-      priority: formData.get('priority') as any,
+      priority: 'medium',
       status: 'open',
       reportedBy: user.id,
       createdAt: new Date().toISOString().split('T')[0]
     };
     setUserTickets(prev => [newTicket, ...prev]);
     setIsTicketModalOpen(false);
-    alert('Laporan masalah telah dikirim. Staf operasional akan segera merespons.');
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -311,23 +291,6 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
     await new Promise(r => setTimeout(r, 1000));
     onUpdateUser({ name: profileName, phoneNumber: profilePhone });
     setIsSaving(false);
-    alert('Identity Hub updated successfully.');
-  };
-
-  const handleLogoutOtherDevices = () => {
-    if (confirm("Keluarkan akun dari seluruh perangkat lain?")) {
-      setSessions(prev => prev.filter(s => s.current));
-      alert("Protokol logout global berhasil dieksekusi.");
-    }
-  };
-
-  const handleUploadIdentity = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsVerifying(true);
-    await new Promise(r => setTimeout(r, 3000));
-    setIsVerifying(false);
-    onUpdateUser({ verificationStatus: VerificationStatus.PENDING });
-    alert("Dokumen Identitas diunggah. Node verifikasi akan segera melakukan audit.");
   };
 
   const renderOverview = () => (
@@ -335,8 +298,8 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
        <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
              <div>
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Pusat Aktivitas</h2>
-                <p className="text-slate-400 text-sm font-medium">Selamat datang kembali, {user.name}. Apa yang ingin Anda cari hari ini?</p>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">{d.activity}</h2>
+                <p className="text-slate-400 text-sm font-medium">{d.welcome}, {user.name}.</p>
              </div>
              <div className="relative w-full md:w-[400px]">
                 <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-indigo-400"></i>
@@ -344,7 +307,7 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
                   type="text" 
                   value={quickSearch}
                   onChange={(e) => setQuickSearch(e.target.value)}
-                  placeholder="Cari hotel, villa, atau homestay..." 
+                  placeholder={d.search_p} 
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-14 pr-6 text-sm font-bold text-slate-700 outline-none focus:ring-4 ring-indigo-50 transition-all"
                 />
              </div>
@@ -353,10 +316,10 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
 
        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { label: 'Upcoming Stays', value: userBookings.filter(b => b.status === BookingStatus.CONFIRMED).length, icon: 'fa-calendar-check', color: 'text-indigo-600' },
-            { label: 'Messages', value: totalUnreadMessages, icon: 'fa-comment-dots', color: 'text-amber-600' },
-            { label: 'Saved Items', value: wishlistItems.length, icon: 'fa-heart', color: 'text-rose-600' },
-            { label: 'Active Inquiries', value: myInquiries.filter(i => i.status !== 'closed').length, icon: 'fa-message', color: 'text-emerald-600' },
+            { label: d.stat_upcoming, value: userBookings.filter(b => b.status === BookingStatus.CONFIRMED).length, icon: 'fa-calendar-check', color: 'text-indigo-600' },
+            { label: d.stat_messages, value: totalUnreadMessages, icon: 'fa-comment-dots', color: 'text-amber-600' },
+            { label: d.stat_saved, value: wishlistItems.length, icon: 'fa-heart', color: 'text-rose-600' },
+            { label: d.stat_inquiries, value: myInquiries.filter(i => i.status !== 'closed').length, icon: 'fa-message', color: 'text-emerald-600' },
           ].map((stat, i) => (
             <div key={i} className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 bg-slate-50 ${stat.color} group-hover:scale-110 transition-transform`}>
@@ -367,20 +330,68 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
             </div>
           ))}
        </div>
+
+       <div className="grid lg:grid-cols-3 gap-10">
+          <div className="lg:col-span-2 space-y-10">
+             <div className="space-y-6">
+                <div className="flex items-center justify-between px-2">
+                   <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">{d.section_payments}</h3>
+                   <button onClick={() => setActiveTab('payments')} className="text-indigo-600 text-[10px] font-black uppercase tracking-widest hover:underline">{d.btn_all_payments}</button>
+                </div>
+                <div className="bg-white rounded-[48px] border border-slate-100 overflow-hidden shadow-sm divide-y divide-slate-50">
+                   {userBookings.slice(0, 3).map(bk => {
+                     const biz = MOCK_BUSINESSES.find(b => b.id === bk.businessId);
+                     return (
+                       <div key={bk.id} className="p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-slate-50/50 transition-all">
+                          <div className="flex items-center gap-6">
+                             <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-xl font-black shadow-inner">
+                                <i className="fas fa-file-invoice-dollar"></i>
+                             </div>
+                             <div>
+                                <p className="font-black text-slate-900 mb-1 uppercase text-sm">{biz?.name}</p>
+                                <div className="flex flex-wrap items-center gap-3">
+                                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Rp {bk.totalPrice.toLocaleString()}</p>
+                                   <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
+                                   <p className="text-[10px] font-black text-indigo-600">REF: {bk.id}</p>
+                                </div>
+                             </div>
+                          </div>
+                          <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+                             bk.verifiedPayment ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
+                          }`}>{bk.verifiedPayment ? 'SETTLED' : 'PENDING'}</span>
+                       </div>
+                     );
+                   })}
+                </div>
+             </div>
+          </div>
+
+          <div className="space-y-8">
+             <div className="bg-slate-950 p-10 rounded-[48px] shadow-2xl text-white relative overflow-hidden flex flex-col justify-between min-h-[400px]">
+                <div className="relative z-10">
+                   <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-xl mb-8">
+                      <i className="fas fa-ticket-simple"></i>
+                   </div>
+                   <h3 className="text-3xl font-black tracking-tighter mb-4 uppercase leading-none">{d.checkin_card_title}</h3>
+                   <p className="text-indigo-200/60 font-medium mb-10 text-sm leading-relaxed">{d.checkin_card_desc}</p>
+                   <div className="p-8 bg-white rounded-[40px] flex items-center justify-center shadow-2xl">
+                      <i className="fas fa-qrcode text-7xl text-slate-900"></i>
+                   </div>
+                </div>
+             </div>
+          </div>
+       </div>
     </div>
   );
 
   const renderSupport = () => (
     <div className="space-y-12 animate-fade-up">
-       {/* Support Matrix Grid */}
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          
-          {/* FAQ & Knowledge Hub */}
           <div className="lg:col-span-2 space-y-10">
              <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm space-y-10">
                 <div>
-                   <h3 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Knowledge Hub (FAQ)</h3>
-                   <p className="text-slate-400 text-sm font-medium">Temukan solusi cepat untuk kendala umum Anda.</p>
+                   <h3 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">{d.faq_title}</h3>
+                   <p className="text-slate-400 text-sm font-medium">{language === 'id' ? 'Solusi cepat untuk kendala Anda.' : 'Quick solutions for your concerns.'}</p>
                 </div>
                 <div className="space-y-4">
                    {faqData.map(faq => (
@@ -403,8 +414,8 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
              </div>
 
              <div className="space-y-8">
-                <h3 className="text-2xl font-black text-slate-900 tracking-tighter uppercase px-2">Panduan Pengguna</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <h3 className="text-2xl font-black text-slate-900 tracking-tighter uppercase px-2">{d.guide_title}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    {guideData.map(guide => (
                       <div key={guide.title} className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl transition-all group cursor-pointer">
                          <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:bg-indigo-600 group-hover:text-white transition-all">
@@ -417,13 +428,9 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
                 </div>
              </div>
 
-             {/* Existing Maintenance Tickets & Reviews Sections preserved here */}
              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <div className="space-y-6">
-                   <div className="flex justify-between items-center px-2">
-                      <h4 className="font-black text-slate-900 uppercase text-sm">Tiket Maintenance</h4>
-                      <button onClick={() => setIsTicketModalOpen(true)} className="text-[10px] font-black text-indigo-600 uppercase hover:underline">Lapor Unit</button>
-                   </div>
+                   <h4 className="font-black text-slate-900 uppercase text-sm px-2">{d.maintenance_title}</h4>
                    <div className="space-y-4">
                       {userTickets.map(tk => (
                         <div key={tk.id} className="p-6 bg-white border border-slate-100 rounded-3xl shadow-sm flex items-center justify-between">
@@ -437,9 +444,7 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
                    </div>
                 </div>
                 <div className="space-y-6">
-                   <div className="flex justify-between items-center px-2">
-                      <h4 className="font-black text-slate-900 uppercase text-sm">Riwayat Ulasan</h4>
-                   </div>
+                   <h4 className="font-black text-slate-900 uppercase text-sm px-2">{d.review_history}</h4>
                    <div className="space-y-4">
                       {userReviews.slice(0, 2).map(rv => (
                         <div key={rv.id} className="p-6 bg-white border border-slate-100 rounded-3xl shadow-sm">
@@ -454,25 +459,18 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
              </div>
           </div>
 
-          {/* Contact & Complaints Column */}
           <div className="space-y-10">
              <div className="bg-slate-950 p-10 rounded-[56px] shadow-2xl text-white relative overflow-hidden flex flex-col justify-between min-h-[400px]">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-600/20 rounded-full blur-3xl"></div>
                 <div className="relative z-10">
-                   <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-xl mb-8 shadow-xl">
+                   <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-xl mb-8">
                       <i className="fas fa-headset"></i>
                    </div>
-                   <h3 className="text-3xl font-black tracking-tighter mb-4 uppercase leading-none">Kontak <br/> Bantuan</h3>
-                   <p className="text-indigo-200/60 font-medium mb-12 text-sm leading-relaxed">Pusat kendali operasional kami siap membantu Anda 24/7 melalui berbagai jalur.</p>
-                   
+                   <h3 className="text-3xl font-black tracking-tighter mb-4 uppercase leading-none">{d.contact_title}</h3>
+                   <p className="text-indigo-200/60 font-medium mb-12 text-sm leading-relaxed">{d.contact_desc}</p>
                    <div className="space-y-4">
                       <button onClick={() => window.open('https://wa.me/6281234567890')} className="w-full py-4 bg-white/10 hover:bg-white/20 border border-white/10 rounded-2xl flex items-center justify-center gap-4 transition-all">
                          <i className="fab fa-whatsapp text-emerald-400"></i>
-                         <span className="text-[11px] font-black uppercase tracking-widest">WhatsApp Support</span>
-                      </button>
-                      <button onClick={() => window.location.href = 'mailto:support@seulanga.com'} className="w-full py-4 bg-white/10 hover:bg-white/20 border border-white/10 rounded-2xl flex items-center justify-center gap-4 transition-all">
-                         <i className="far fa-envelope text-indigo-400"></i>
-                         <span className="text-[11px] font-black uppercase tracking-widest">Email Ticketing</span>
+                         <span className="text-[11px] font-black uppercase tracking-widest">WhatsApp</span>
                       </button>
                    </div>
                 </div>
@@ -480,12 +478,12 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
 
              <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm space-y-8">
                 <div className="flex items-center justify-between">
-                   <h4 className="text-xl font-black text-slate-900 uppercase">Daftar Pengaduan</h4>
+                   <h4 className="text-xl font-black text-slate-900 uppercase">{d.complaint_list}</h4>
                    <button onClick={() => setIsComplaintModalOpen(true)} className="w-10 h-10 bg-rose-50 text-rose-500 rounded-xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm"><i className="fas fa-plus"></i></button>
                 </div>
                 <div className="space-y-4">
                    {userComplaints.map(cmp => (
-                      <div key={cmp.id} className="p-6 bg-slate-50 border border-slate-100 rounded-[32px] space-y-3 hover:border-rose-200 transition-all group">
+                      <div key={cmp.id} className="p-6 bg-slate-50 border border-slate-100 rounded-[32px] space-y-3 group hover:border-rose-200 transition-all">
                          <div className="flex justify-between items-start">
                             <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border ${
                                cmp.status === 'resolved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
@@ -494,77 +492,41 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
                          </div>
                          <p className="font-black text-slate-800 text-xs uppercase truncate">{cmp.subject}</p>
                          <p className="text-[10px] text-slate-500 line-clamp-2 leading-relaxed">{cmp.message}</p>
-                         <button className="text-[9px] font-black text-indigo-600 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all">Cek Detail →</button>
                       </div>
                    ))}
                    {userComplaints.length === 0 && (
-                      <p className="text-center py-10 text-slate-300 font-bold uppercase text-[9px] tracking-widest italic">Tidak ada pengaduan aktif</p>
+                      <p className="text-center py-10 text-slate-300 font-bold uppercase text-[9px] tracking-widest italic">{d.empty_complaints}</p>
                    )}
                 </div>
              </div>
           </div>
        </div>
 
-       {/* Complaint Submission Modal */}
        {isComplaintModalOpen && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
              <div className="bg-white w-full max-w-xl rounded-[48px] p-12 space-y-10 shadow-2xl relative">
                 <button onClick={() => setIsComplaintModalOpen(false)} className="absolute top-10 right-10 w-12 h-12 bg-slate-50 text-slate-400 hover:text-slate-900 rounded-2xl flex items-center justify-center transition-all"><i className="fas fa-times"></i></button>
                 <div>
-                   <h3 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Layanan Pengaduan Formal</h3>
-                   <p className="text-slate-400 text-sm font-medium">Sampaikan keluhan terkait kualitas layanan atau sengketa lainnya.</p>
+                   <h3 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">{d.modal_complaint_title}</h3>
+                   <p className="text-slate-400 text-sm font-medium">{d.modal_complaint_desc}</p>
                 </div>
                 <form onSubmit={handleLodgeComplaint} className="space-y-6">
                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Pilih Objek Pengaduan</label>
-                      <select name="businessId" required className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-6 text-sm font-bold text-slate-900 outline-none">
-                         {MOCK_BUSINESSES.map(b => (
-                            <option key={b.id} value={b.id}>{b.name}</option>
-                         ))}
-                         <option value="platform">Platform Seulanga (Layanan Pusat)</option>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{d.form_object}</label>
+                      <select name="businessId" required className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-6 text-sm font-bold outline-none">
+                         {MOCK_BUSINESSES.map(b => ( <option key={b.id} value={b.id}>{b.name}</option> ))}
+                         <option value="platform">Platform Seulanga</option>
                       </select>
                    </div>
                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Subjek Masalah</label>
-                      <input name="subject" required placeholder="Contoh: Masalah Kebersihan, Masalah Billing..." className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-6 text-sm font-bold text-slate-900 outline-none focus:ring-4 ring-rose-50" />
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{d.form_subject}</label>
+                      <input name="subject" required className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:ring-4 ring-rose-50" />
                    </div>
                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Detail Kronologis</label>
-                      <textarea name="message" required rows={4} placeholder="Jelaskan secara detail apa yang terjadi..." className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-6 text-sm font-bold text-slate-900 outline-none resize-none focus:ring-4 ring-rose-50" />
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{d.form_detail}</label>
+                      <textarea name="message" required rows={4} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-6 text-sm font-bold outline-none resize-none focus:ring-4 ring-rose-50" />
                    </div>
-                   <div className="p-6 bg-rose-50 border border-rose-100 rounded-3xl">
-                      <p className="text-[9px] font-bold text-rose-700 leading-relaxed italic">Catatan: Setiap pengaduan akan direkam secara permanen dalam audit trail demi menjamin transparansi penyelesaian.</p>
-                   </div>
-                   <button type="submit" className="w-full py-5 bg-rose-600 text-white rounded-3xl font-black text-xs uppercase tracking-widest shadow-xl shadow-rose-100 hover:bg-rose-700 transition-all">Kirim Pengaduan Ke Admin</button>
-                </form>
-             </div>
-          </div>
-       )}
-
-       {/* Preservation of existing Maintenance Modal */}
-       {isTicketModalOpen && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
-             <div className="bg-white w-full max-w-xl rounded-[48px] p-12 space-y-10 shadow-2xl relative">
-                <button onClick={() => setIsTicketModalOpen(false)} className="absolute top-10 right-10 w-10 h-10 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center transition-all"><i className="fas fa-times"></i></button>
-                <div>
-                   <h3 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Lapor Masalah Unit</h3>
-                   <p className="text-slate-400 text-sm font-medium">Beri tahu staf kami jika ada kendala teknis di unit Anda.</p>
-                </div>
-                <form onSubmit={handleReportProblem} className="space-y-6">
-                   <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Pilih Unit Terkait</label>
-                      <select name="unitId" className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-6 text-sm font-bold outline-none">
-                         {userBookings.filter(b => b.status === BookingStatus.CHECKED_IN).map(b => (
-                            <option key={b.unitId} value={b.unitId}>{MOCK_UNITS.find(u => u.id === b.unitId)?.name}</option>
-                         ))}
-                         <option value="general">Lainnya (Masalah Umum)</option>
-                      </select>
-                   </div>
-                   <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Deskripsi Kendala</label>
-                      <textarea required name="issue" rows={4} placeholder="Jelaskan kendala teknis (Contoh: Lampu mati, AC tidak dingin)..." className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-6 text-sm font-bold focus:ring-4 ring-indigo-50 outline-none resize-none" />
-                   </div>
-                   <button type="submit" className="w-full py-5 bg-indigo-600 text-white rounded-3xl font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all">Submit Maintenance Request</button>
+                   <button type="submit" className="w-full py-5 bg-rose-600 text-white rounded-3xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-rose-700 transition-all">{d.btn_lodge}</button>
                 </form>
              </div>
           </div>
@@ -579,8 +541,8 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
       <div className="space-y-12 animate-fade-up">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
           <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Simpanan Asset (Planning Hub)</h2>
-            <p className="text-slate-400 text-sm font-medium">Kurasi properti pilihan dan bandingkan spesifikasi sebelum reservasi.</p>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">{d.wishlist_title}</h2>
+            <p className="text-slate-400 text-sm font-medium">{d.wishlist_desc}</p>
           </div>
           <div className="flex gap-4">
              {comparingIds.length > 0 && (
@@ -591,7 +553,7 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
                 }`}
                >
                  <i className={`fas ${isCompareMode ? 'fa-table-list' : 'fa-code-compare'}`}></i>
-                 {isCompareMode ? 'Kembali Ke Grid' : `Bandingkan (${comparingIds.length}) Node`}
+                 {isCompareMode ? d.btn_back_grid : `${d.btn_compare} (${comparingIds.length}) Node`}
                </button>
              )}
           </div>
@@ -600,8 +562,8 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
         {isCompareMode ? (
           <div className="bg-white rounded-[56px] border border-slate-100 shadow-sm overflow-hidden animate-in zoom-in-95 duration-500">
              <div className="p-12 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
-                <h3 className="text-2xl font-black text-slate-900 uppercase">Comparison Matrix</h3>
-                <button onClick={() => setComparingIds([])} className="text-[10px] font-black text-rose-500 uppercase tracking-widest hover:underline">Reset Perbandingan</button>
+                <h3 className="text-2xl font-black text-slate-900 uppercase">{d.comparison_matrix}</h3>
+                <button onClick={() => setComparingIds([])} className="text-[10px] font-black text-rose-500 uppercase tracking-widest hover:underline">{d.reset_compare}</button>
              </div>
              <div className="overflow-x-auto">
                 <table className="w-full text-left">
@@ -620,18 +582,6 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
                       <tr>
                          <td className="px-12 py-6 text-xs font-black text-slate-400 uppercase">Category Hub</td>
                          {compareItems.map(item => <td key={item.id} className="px-12 py-6 text-center font-bold text-indigo-600 text-sm">{item.category}</td>)}
-                      </tr>
-                      <tr>
-                         <td className="px-12 py-6 text-xs font-black text-slate-400 uppercase">Trust Rating</td>
-                         {compareItems.map(item => <td key={item.id} className="px-12 py-6 text-center"><span className="px-4 py-1.5 bg-emerald-50 text-emerald-600 rounded-full font-black text-xs">★ {item.rating}</span></td>)}
-                      </tr>
-                      <tr>
-                         <td className="px-12 py-6 text-xs font-black text-slate-400 uppercase">Asset Tags</td>
-                         {compareItems.map(item => <td key={item.id} className="px-12 py-6 text-center text-xs text-slate-500 font-medium">{item.tags?.join(', ')}</td>)}
-                      </tr>
-                      <tr>
-                         <td className="px-12 py-6 text-xs font-black text-slate-400 uppercase">Location Node</td>
-                         {compareItems.map(item => <td key={item.id} className="px-12 py-6 text-center text-xs font-bold text-slate-700">{item.address}</td>)}
                       </tr>
                       <tr>
                          <td className="px-12 py-8"></td>
@@ -668,53 +618,25 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
                        </div>
                     </div>
                     <div className="p-10 space-y-8">
-                       <div>
-                          <div className="flex justify-between items-start mb-2">
-                             <h4 className="text-2xl font-black text-slate-900 tracking-tight uppercase group-hover:text-indigo-600 transition-colors">{item.name}</h4>
-                             <div className="flex items-center gap-1.5 text-emerald-600 font-black text-sm">★ {item.rating}</div>
-                          </div>
-                          <p className="text-xs font-bold text-slate-400 flex items-center gap-2 uppercase">
-                             <i className="fas fa-location-dot text-indigo-400"></i>
-                             {item.address.split(',')[0]}
-                          </p>
+                       <div className="flex justify-between items-start mb-2">
+                          <h4 className="text-2xl font-black text-slate-900 tracking-tight uppercase group-hover:text-indigo-600 transition-colors">{item.name}</h4>
+                          <div className="flex items-center gap-1.5 text-emerald-600 font-black text-sm">★ {item.rating}</div>
                        </div>
-
-                       <div className="p-6 bg-slate-50 rounded-[32px] border border-slate-100 space-y-6">
-                          <div className="flex justify-between items-center">
-                             <div className="flex flex-col">
-                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Entry Price Node</span>
-                                <div className="flex items-center gap-2">
-                                   <span className="text-lg font-black text-slate-900">Rp 1.5M</span>
-                                   <span className="text-[10px] font-black text-emerald-500 flex items-center gap-1"><i className="fas fa-caret-down"></i> -5%</span>
-                                </div>
-                             </div>
-                             <div className="flex flex-col items-end">
-                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Price Pulse</span>
-                                <button 
-                                  onClick={() => togglePriceAlert(item.id)}
-                                  className={`w-10 h-5 rounded-full relative transition-all ${hasAlert ? 'bg-emerald-500' : 'bg-slate-300'}`}
-                                >
-                                   <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${hasAlert ? 'right-0.5' : 'left-0.5'}`}></div>
-                                </button>
-                             </div>
+                       <div className="p-6 bg-slate-50 rounded-[32px] border border-slate-100 flex justify-between items-center">
+                          <div className="flex flex-col">
+                             <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Price Node</span>
+                             <span className="text-lg font-black text-slate-900">Rp 1.5M</span>
+                          </div>
+                          <div className="flex flex-col items-end">
+                             <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">{d.price_pulse}</span>
+                             <button onClick={() => setPriceAlerts(p => { const n = new Set(p); if(n.has(item.id)) n.delete(item.id); else n.add(item.id); return n; })} className={`w-10 h-5 rounded-full relative transition-all ${hasAlert ? 'bg-emerald-500' : 'bg-slate-300'}`}><div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${hasAlert ? 'right-0.5' : 'left-0.5'}`}></div></button>
                           </div>
                        </div>
-
-                       <div className="flex gap-3">
-                          <button className="flex-1 py-4 bg-slate-950 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-indigo-600 transition-all">Check Availability</button>
-                          <button className="p-4 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all"><i className="fas fa-trash-can"></i></button>
-                       </div>
+                       <button className="w-full py-4 bg-slate-950 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 transition-all">Check Availability</button>
                     </div>
                  </div>
                );
              })}
-             {wishlistItems.length === 0 && (
-               <div className="col-span-full py-40 text-center bg-white border border-dashed border-slate-200 rounded-[64px]">
-                  <i className="fas fa-heart-crack text-slate-100 text-6xl mb-6"></i>
-                  <p className="text-slate-300 font-black uppercase text-xs tracking-widest italic">Belum ada aset yang Anda simpan</p>
-                  <button onClick={() => onNavigate('explore')} className="mt-8 px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all">Eksplorasi Properti</button>
-               </div>
-             )}
           </div>
         )}
       </div>
@@ -724,35 +646,21 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
   const renderMessages = () => {
     const activeConv = conversations.find(c => c.id === selectedChatId);
     const activeBiz = MOCK_BUSINESSES.find(b => b.id === activeConv?.businessId);
-
     return (
       <div className="h-[calc(100vh-200px)] flex gap-8 animate-fade-up">
-        {/* Conversation List preserved here */}
         <div className="w-96 bg-white rounded-[48px] border border-slate-100 shadow-sm flex flex-col overflow-hidden">
            <div className="p-8 border-b border-slate-50 flex items-center justify-between">
-              <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">Messages</h3>
+              <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">{d.stat_messages}</h3>
               <i className="fas fa-message text-indigo-200 text-xl"></i>
            </div>
            <div className="flex-1 overflow-y-auto scrollbar-hide p-4 space-y-2">
               {conversations.map(conv => {
                  const biz = MOCK_BUSINESSES.find(b => b.id === conv.businessId);
                  return (
-                    <button 
-                       key={conv.id}
-                       onClick={() => {
-                          setSelectedChatId(conv.id);
-                          setConversations(prev => prev.map(c => c.id === conv.id ? { ...c, unreadCount: 0 } : c));
-                       }}
-                       className={`w-full p-6 rounded-[32px] transition-all text-left flex gap-5 items-center relative ${
-                          selectedChatId === conv.id ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-100' : 'hover:bg-slate-50 text-slate-900'
-                       }`}
-                    >
+                    <button key={conv.id} onClick={() => setSelectedChatId(conv.id)} className={`w-full p-6 rounded-[32px] transition-all text-left flex gap-5 items-center relative ${selectedChatId === conv.id ? 'bg-indigo-600 text-white shadow-xl' : 'hover:bg-slate-50 text-slate-900'}`}>
                        <img src={biz?.images[0]} className="w-14 h-14 rounded-2xl object-cover ring-4 ring-white/10" />
                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-center mb-1">
-                             <p className="font-black text-sm uppercase truncate">{biz?.name}</p>
-                             <span className={`text-[8px] font-bold uppercase ${selectedChatId === conv.id ? 'text-indigo-200' : 'text-slate-300'}`}>{conv.time}</span>
-                          </div>
+                          <p className="font-black text-sm uppercase truncate">{biz?.name}</p>
                           <p className={`text-[11px] truncate font-medium ${selectedChatId === conv.id ? 'text-indigo-100' : 'text-slate-500'}`}>{conv.lastMessage}</p>
                        </div>
                     </button>
@@ -760,80 +668,34 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
               })}
            </div>
         </div>
-
-        {/* Chat Window preserved here */}
         <div className="flex-1 bg-white rounded-[48px] border border-slate-100 shadow-sm flex flex-col overflow-hidden relative">
            {activeConv && activeBiz ? (
               <>
                  <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/20">
                     <div className="flex items-center gap-5">
                        <img src={activeBiz.images[0]} className="w-14 h-14 rounded-2xl object-cover shadow-md" />
-                       <div>
-                          <h4 className="font-black text-slate-900 uppercase text-sm tracking-tight">{activeBiz.name}</h4>
-                          <div className="flex items-center gap-2 mt-0.5">
-                             <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Business Online</span>
-                          </div>
-                       </div>
+                       <h4 className="font-black text-slate-900 uppercase text-sm tracking-tight">{activeBiz.name}</h4>
                     </div>
                  </div>
-
                  <div className="flex-1 overflow-y-auto p-10 space-y-6 scrollbar-hide">
                     {activeConv.messages.map(msg => (
                        <div key={msg.id} className={`flex ${msg.senderId === user.id ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-[70%] space-y-2 ${msg.senderId === user.id ? 'items-end' : 'items-start'}`}>
-                             <div className={`p-6 rounded-[32px] text-sm font-medium shadow-sm ${
-                                msg.senderId === user.id 
-                                   ? 'bg-indigo-600 text-white rounded-tr-none' 
-                                   : 'bg-slate-100 text-slate-800 rounded-tl-none border border-slate-200/50'
-                             }`}>
-                                {msg.attachment && (
-                                   <div className="mb-4 rounded-2xl overflow-hidden border border-white/20">
-                                      <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=400" className="w-full h-auto" />
-                                      <div className="bg-black/20 p-2 text-center text-[10px] font-black uppercase tracking-widest">Attached Visual Node</div>
-                                   </div>
-                                )}
-                                {msg.text}
-                             </div>
-                             <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest px-2">{msg.timestamp}</p>
+                          <div className={`p-6 rounded-[32px] text-sm font-medium ${msg.senderId === user.id ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-800'}`}>
+                             {msg.text}
                           </div>
                        </div>
                     ))}
                     <div ref={chatEndRef} />
                  </div>
-
                  <div className="p-8 border-t border-slate-50 bg-white sticky bottom-0">
                     <form onSubmit={handleSendMessage} className="flex gap-4">
-                       <button 
-                          type="button" 
-                          onClick={handleAttachFile}
-                          className="w-14 h-14 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center hover:text-indigo-600 hover:bg-indigo-50 transition-all"
-                       >
-                          <i className="fas fa-plus"></i>
-                       </button>
-                       <input 
-                          type="text" 
-                          value={messageInput}
-                          onChange={(e) => setMessageInput(e.target.value)}
-                          placeholder="Type your message..." 
-                          className="flex-1 bg-slate-50 border border-slate-200 rounded-[28px] px-8 py-4 font-bold text-slate-900 focus:ring-4 ring-indigo-50 outline-none transition-all"
-                       />
-                       <button 
-                          type="submit"
-                          className="w-14 h-14 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all"
-                       >
-                          <i className="fas fa-paper-plane"></i>
-                       </button>
+                       <input type="text" value={messageInput} onChange={(e) => setMessageInput(e.target.value)} placeholder="Type message..." className="flex-1 bg-slate-50 border border-slate-200 rounded-[28px] px-8 py-4 font-bold outline-none" />
+                       <button type="submit" className="w-14 h-14 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-xl hover:bg-indigo-700 transition-all"><i className="fas fa-paper-plane"></i></button>
                     </form>
                  </div>
               </>
            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-12 space-y-6">
-                 <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 text-4xl shadow-inner">
-                    <i className="fas fa-comments"></i>
-                 </div>
-                 <h4 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">Pusat Komunikasi</h4>
-              </div>
+              <div className="flex-1 flex flex-col items-center justify-center"><i className="fas fa-comments text-4xl text-slate-200 mb-4"></i><h4 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">{language === 'id' ? 'Pusat Komunikasi' : 'Comm Hub'}</h4></div>
            )}
         </div>
       </div>
@@ -843,141 +705,66 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
   const renderBookings = () => (
     <div className="space-y-12 animate-fade-up">
        <div className="space-y-8">
-          <div className="flex items-center justify-between px-4">
-             <div>
-                <h3 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">Pemesanan Aktif</h3>
-                <p className="text-slate-400 text-xs font-medium uppercase tracking-widest">Upcoming & Active Stays</p>
-             </div>
-          </div>
+          <h3 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">{language === 'id' ? 'Daftar Reservasi' : 'Booking List'}</h3>
           <div className="grid grid-cols-1 gap-6">
-             {activeBookings.length > 0 ? activeBookings.map(bk => {
+             {activeBookings.map(bk => {
                 const biz = MOCK_BUSINESSES.find(b => b.id === bk.businessId);
-                const unit = MOCK_UNITS.find(u => u.id === bk.unitId);
                 return (
-                  <div key={bk.id} className="bg-white rounded-[48px] border border-slate-100 shadow-sm overflow-hidden flex flex-col lg:flex-row group hover:shadow-xl transition-all duration-500">
+                  <div key={bk.id} className="bg-white rounded-[48px] border border-slate-100 shadow-sm overflow-hidden flex flex-col lg:flex-row group hover:shadow-xl transition-all">
                      <div className="lg:w-72 h-64 lg:h-auto overflow-hidden relative">
                         <img src={biz?.images[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
                      </div>
                      <div className="flex-1 p-10 flex flex-col justify-between space-y-8">
-                        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-                           <div>
-                              <h4 className="text-3xl font-black text-slate-900 tracking-tighter uppercase mb-2 group-hover:text-indigo-600 transition-colors">{biz?.name}</h4>
-                              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                                 <i className="fas fa-location-dot text-indigo-400"></i>
-                                 {biz?.address}
-                              </p>
-                           </div>
-                           <span className="px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-indigo-100">{bk.status}</span>
+                        <div>
+                           <h4 className="text-3xl font-black text-slate-900 tracking-tighter uppercase mb-2">{biz?.name}</h4>
+                           <span className="px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-[9px] font-black uppercase border border-indigo-100">{bk.status}</span>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-8 border-y border-slate-50">
-                           <div>
-                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Unit Asset</p>
-                              <p className="text-sm font-black text-slate-800 uppercase">{unit?.name}</p>
-                           </div>
-                           <div>
-                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Settlement</p>
-                              <p className="text-sm font-black text-indigo-600 uppercase">Rp {bk.totalPrice.toLocaleString()}</p>
-                           </div>
+                        <div className="grid grid-cols-2 gap-8 py-8 border-y border-slate-50">
+                           <div><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Check-In</p><p className="text-sm font-black text-slate-800">{bk.checkIn}</p></div>
+                           <div><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Total</p><p className="text-sm font-black text-indigo-600">Rp {bk.totalPrice.toLocaleString()}</p></div>
                         </div>
-                        <div className="flex flex-wrap gap-4 pt-4">
-                           <button onClick={() => { setSelectedBooking(bk); setIsTransDetailOpen(true); }} className="px-8 py-3.5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-lg">Detail Transaksi</button>
-                           {(bk.status === BookingStatus.CONFIRMED || bk.status === BookingStatus.PENDING) && (
-                             <button onClick={() => { setSelectedBooking(bk); setIsCancelModalOpen(true); }} className="px-8 py-3.5 bg-white border border-rose-100 text-rose-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all shadow-sm">Batalkan Pesanan</button>
-                           )}
-                        </div>
+                        <button onClick={() => { setSelectedBooking(bk); setIsTransDetailOpen(true); }} className="px-8 py-3.5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-lg">Detail Transaksi</button>
                      </div>
                   </div>
                 );
-             }) : (
-               <div className="py-20 text-center bg-white rounded-[48px] border-2 border-dashed border-slate-100">
-                  <i className="far fa-calendar-xmark text-4xl text-slate-200 mb-4"></i>
-                  <p className="text-slate-300 font-black uppercase text-xs tracking-widest">Tidak ada pesanan aktif</p>
-               </div>
-             )}
+             })}
           </div>
        </div>
     </div>
   );
 
   const renderProfile = () => (
-    <div className="max-w-6xl mx-auto space-y-12 animate-fade-up">
+    <div className="max-w-4xl mx-auto space-y-12 animate-fade-up">
        <div className="bg-white p-12 rounded-[56px] border border-slate-100 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-slate-50 rounded-full blur-3xl -mr-60 -mt-60"></div>
-          
-          <div className="relative z-10">
-             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 mb-16 pb-12 border-b border-slate-50">
-                <div className="flex items-center gap-10">
-                   <div className="relative">
-                      <img src={user.avatar} className="w-32 h-32 rounded-[40px] object-cover border-8 border-slate-50 shadow-2xl" />
-                      <button className="absolute -bottom-2 -right-2 w-12 h-12 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-xl border-4 border-white"><i className="fas fa-camera"></i></button>
-                   </div>
-                   <div>
-                      <h3 className="text-4xl font-black text-slate-900 tracking-tighter mb-2">{user.name}</h3>
-                      <div className="flex flex-wrap gap-4 items-center">
-                         <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                           user.verificationStatus === VerificationStatus.VERIFIED ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'
-                         }`}>
-                           Identity {user.verificationStatus}
-                         </span>
-                      </div>
-                   </div>
-                </div>
-                
-                <div className="flex bg-slate-100 p-1.5 rounded-[28px] border border-slate-200/40 gap-1">
-                   {[
-                     { id: 'personal', label: 'Data Personal', icon: 'fa-user' },
-                     { id: 'verification', label: 'KYC', icon: 'fa-id-card' },
-                     { id: 'preferences', label: 'Preferensi', icon: 'fa-sliders' },
-                     { id: 'security', label: 'Keamanan', icon: 'fa-shield-halved' }
-                   ].map(sub => (
-                     <button 
-                       key={sub.id}
-                       onClick={() => setProfileSubTab(sub.id as ProfileSubTab)}
-                       className={`px-6 py-3 rounded-[22px] text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 ${
-                         profileSubTab === sub.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-900'
-                       }`}
-                     >
-                       <i className={`fas ${sub.icon}`}></i>
-                       {sub.label}
-                     </button>
-                   ))}
-                </div>
-             </div>
-
-             <div className="min-h-[500px]">
-                {profileSubTab === 'personal' && (
-                  <form onSubmit={handleUpdateProfile} className="grid grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-10 animate-in slide-in-from-bottom-4 duration-500">
-                     <div className="space-y-4">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Identity Display Name</label>
-                        <input type="text" value={profileName} onChange={(e) => setProfileName(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-[32px] px-8 py-5 font-bold text-slate-900 focus:ring-4 ring-indigo-50 outline-none transition-all" />
-                     </div>
-                     <div className="lg:col-span-2 pt-10 flex justify-end">
-                        <button disabled={isSaving} className="px-12 py-5 bg-slate-950 text-white rounded-[24px] font-black text-xs uppercase tracking-widest shadow-xl hover:bg-indigo-600 transition-all">
-                           {isSaving ? <i className="fas fa-spinner fa-spin mr-2"></i> : <i className="fas fa-save mr-2"></i>}
-                           Save Changes
-                        </button>
-                     </div>
-                  </form>
-                )}
-             </div>
+          <div className="relative z-10 flex flex-col items-center text-center pb-12 border-b border-slate-50">
+             <img src={user.avatar} className="w-32 h-32 rounded-[40px] object-cover border-8 border-slate-50 shadow-2xl mb-6" />
+             <h3 className="text-4xl font-black text-slate-900 tracking-tighter mb-2">{user.name}</h3>
+             <span className="px-4 py-1.5 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase rounded-full border border-emerald-100">Identity {user.verificationStatus}</span>
           </div>
+          <form onSubmit={handleUpdateProfile} className="mt-12 space-y-6">
+             <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{language === 'id' ? 'Nama Identitas' : 'Identity Name'}</label>
+                <input type="text" value={profileName} onChange={(e) => setProfileName(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-[32px] px-8 py-5 font-bold text-slate-900 outline-none focus:ring-4 ring-indigo-50 transition-all" />
+             </div>
+             <button disabled={isSaving} className="w-full py-5 bg-slate-950 text-white rounded-3xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 transition-all">
+                {isSaving ? '...' : (language === 'id' ? 'Simpan Perubahan' : 'Save Changes')}
+             </button>
+          </form>
        </div>
     </div>
   );
 
-  const renderPayments = () => (
-    <div className="space-y-12 animate-fade-up">
-       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm">
-             <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-8">
-                <i className="fas fa-wallet"></i>
-             </div>
-             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Pengeluaran</p>
-             <h3 className="text-4xl font-black text-slate-900 tracking-tighter">Rp {userBookings.filter(b => b.verifiedPayment).reduce((sum, b) => sum + b.totalPrice, 0).toLocaleString()}</h3>
-          </div>
-       </div>
-    </div>
-  );
+  const renderTabContent = () => {
+    switch(activeTab) {
+      case 'overview': return renderOverview();
+      case 'bookings': return renderBookings();
+      case 'messages': return renderMessages();
+      case 'wishlist': return renderWishlist();
+      case 'support': return renderSupport();
+      case 'profile': return renderProfile();
+      default: return renderOverview();
+    }
+  };
 
   return (
     <div className="flex h-screen bg-[#f8fafc] overflow-hidden">
@@ -993,26 +780,16 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
           </div>
           <nav className="flex-1 overflow-y-auto p-6 space-y-1.5 scrollbar-hide">
              {[
-               { id: 'overview', label: 'Pusat Aktivitas', icon: 'fa-gauge-high' },
-               { id: 'bookings', label: 'Daftar Reservasi', icon: 'fa-calendar-check' },
-               { id: 'messages', label: 'Communication Hub', icon: 'fa-comment-dots', count: totalUnreadMessages },
-               { id: 'payments', label: 'Keuangan & Bayar', icon: 'fa-money-bill-transfer' },
-               { id: 'wishlist', label: 'Wishlist & Planning', icon: 'fa-heart' },
-               { id: 'support', label: 'Support & Help Center', icon: 'fa-circle-question' },
-               { id: 'profile', label: 'Identity Hub', icon: 'fa-user-shield' },
+               { id: 'overview', label: language === 'id' ? 'Pusat Aktivitas' : 'Activity Hub', icon: 'fa-gauge-high' },
+               { id: 'bookings', label: language === 'id' ? 'Daftar Reservasi' : 'Bookings', icon: 'fa-calendar-check' },
+               { id: 'messages', label: language === 'id' ? 'Pusat Komunikasi' : 'Messaging', icon: 'fa-comment-dots', count: totalUnreadMessages },
+               { id: 'wishlist', label: language === 'id' ? 'Wishlist & Planning' : 'Planning Hub', icon: 'fa-heart' },
+               { id: 'support', label: language === 'id' ? 'Pusat Bantuan' : 'Support Hub', icon: 'fa-circle-question' },
+               { id: 'profile', label: language === 'id' ? 'Profil Identitas' : 'Identity Hub', icon: 'fa-user-shield' },
              ].map(item => (
-               <button 
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id as GuestTab)}
-                  className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all relative ${
-                    activeTab === item.id ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-100' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
-                  }`}
-               >
+               <button key={item.id} onClick={() => setActiveTab(item.id as GuestTab)} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all relative ${activeTab === item.id ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-100' : 'text-slate-500 hover:bg-slate-50'}`}>
                   <i className={`fas ${item.icon} text-lg w-6`}></i>
                   {item.label}
-                  {item.count && item.count > 0 && activeTab !== item.id && (
-                     <span className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white">{item.count}</span>
-                  )}
                </button>
              ))}
           </nav>
@@ -1020,58 +797,22 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
 
        <main className="flex-1 overflow-y-auto bg-[#f8fafc] scrollbar-hide">
           <header className="h-24 bg-white/70 backdrop-blur-md border-b border-slate-200/50 flex items-center justify-between px-12 sticky top-0 z-40">
-             <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">{activeTab.replace('-', ' ')} Matrix</h1>
+             <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">{activeTab} Matrix</h1>
           </header>
 
           <div className="p-12 max-w-[1400px] mx-auto">
-             {activeTab === 'overview' && renderOverview()}
-             {activeTab === 'bookings' && renderBookings()}
-             {activeTab === 'wishlist' && renderWishlist()}
-             {activeTab === 'messages' && renderMessages()}
-             {activeTab === 'payments' && renderPayments()}
-             {activeTab === 'support' && renderSupport()}
-             {activeTab === 'profile' && renderProfile()}
+             {renderTabContent()}
           </div>
        </main>
 
-       {/* Shared Review Modal */}
-       {isReviewModalOpen && (
-         <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="bg-white w-full max-w-xl rounded-[48px] p-12 space-y-10 relative">
-               <button onClick={() => { setIsReviewModalOpen(false); setEditingReview(null); }} className="absolute top-10 right-10 w-10 h-10 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center transition-all"><i className="fas fa-times"></i></button>
-               <div>
-                  <h3 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Kontribusi Reputasi</h3>
-               </div>
-               <form onSubmit={handleSubmitReview} className="space-y-8">
-                  <div className="flex justify-center gap-4 text-3xl">
-                     {[1, 2, 3, 4, 5].map(star => (
-                        <button key={star} type="button" onClick={() => setRating(star)} className={`transition-all duration-300 ${rating >= star ? 'text-amber-400' : 'text-slate-200'}`}>
-                           <i className="fas fa-star"></i>
-                        </button>
-                     ))}
-                  </div>
-                  <textarea required value={comment} onChange={(e) => setComment(e.target.value)} rows={5} placeholder="Bagikan pengalaman Anda..." className="w-full bg-slate-50 border border-slate-200 rounded-[32px] p-6 text-sm font-bold text-slate-900 focus:ring-4 ring-indigo-50 outline-none" />
-                  <button type="submit" className="w-full py-5 bg-indigo-600 text-white rounded-3xl font-black text-xs uppercase shadow-xl hover:bg-indigo-700 transition-all">Submit Feedback</button>
-               </form>
-            </div>
-         </div>
-       )}
-
-       {/* Shared Transaction Detail Modal */}
        {isTransDetailOpen && selectedBooking && (
-         <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
+         <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in">
             <div className="bg-white w-full max-w-2xl rounded-[64px] p-16 shadow-2xl relative overflow-hidden">
                <button onClick={() => setIsTransDetailOpen(false)} className="absolute top-10 right-10 w-12 h-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center transition-all z-10"><i className="fas fa-times"></i></button>
                <h3 className="text-4xl font-black text-slate-900 tracking-tighter uppercase mb-12">Detail Transaksi</h3>
-               <div className="p-10 bg-slate-50 rounded-[40px] border border-slate-100 space-y-6">
-                  <div className="flex justify-between items-center text-sm font-bold text-slate-400 uppercase tracking-widest">
-                     <span>Layanan Dasar Node</span>
-                     <span className="text-slate-900">Rp {selectedBooking.totalPrice.toLocaleString()}</span>
-                  </div>
-                  <div className="pt-6 border-t border-slate-200 flex justify-between items-center">
-                     <span className="text-lg font-black text-slate-900 uppercase">Total Settlement</span>
-                     <span className="text-3xl font-black text-indigo-600">Rp {selectedBooking.totalPrice.toLocaleString()}</span>
-                  </div>
+               <div className="p-10 bg-slate-50 rounded-[40px] border border-slate-100 flex justify-between items-center">
+                  <span className="text-lg font-black text-slate-900 uppercase">Total Settlement</span>
+                  <span className="text-3xl font-black text-indigo-600">Rp {selectedBooking.totalPrice.toLocaleString()}</span>
                </div>
             </div>
          </div>
