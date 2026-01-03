@@ -97,7 +97,7 @@ const App: React.FC = () => {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-950">
         <div className="relative">
-          <div className="w-24 h-24 border-2 border-indigo-500/20 rounded-[32px] absolute inset-0 animate-ping"></div>
+          <div className="w-24 h-24 border-2 border-indigo-50/20 rounded-[32px] absolute inset-0 animate-ping"></div>
           <div className="w-24 h-24 border-b-4 border-indigo-500 rounded-[32px] animate-spin"></div>
           <div className="absolute inset-0 flex items-center justify-center">
              <i className="fas fa-layer-group text-indigo-500 text-3xl"></i>
@@ -131,7 +131,8 @@ const App: React.FC = () => {
       case 'staff-dash':
         return <StaffDashboard currentUser={currentUser} onUpdateUser={handleUpdateUser} />;
       case 'guest-dash':
-        return <GuestDashboard currentUser={currentUser} onUpdateUser={handleUpdateUser} initialTab={adminSubView === 'profile' ? 'profile' : 'overview'} />;
+        // Fix: Passing handleNavigate to GuestDashboard
+        return <GuestDashboard currentUser={currentUser} onUpdateUser={handleUpdateUser} onNavigate={handleNavigate} initialTab={adminSubView === 'profile' ? 'profile' : 'overview'} />;
       case 'property-detail':
         return selectedProperty ? (
           <PropertyDetail 
