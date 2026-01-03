@@ -296,6 +296,7 @@ export interface Review {
   guestName: string;
   rating: number;
   comment: string;
+  ownerReply?: string;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
 }

@@ -11,7 +11,7 @@ import {
 } from '../types';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
-  ResponsiveContainer, BarChart, Bar
+  ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie
 } from 'recharts';
 
 const revenueData = [
@@ -23,7 +23,14 @@ const revenueData = [
   { name: 'Dec', revenue: 78000000, occupancy: 95, bookings: 72 },
 ];
 
-type ModuleType = 'overview' | 'inventory' | 'bookings' | 'finance' | 'team' | 'profile' | 'marketing' | 'reviews' | 'audit' | 'subscription';
+const unitPerformanceData = [
+  { name: 'Deluxe Suite 201', revenue: 24500000, bookings: 18, rate: 92 },
+  { name: 'Executive Room 305', revenue: 32000000, bookings: 12, rate: 85 },
+  { name: 'Standard Twin 102', revenue: 15400000, bookings: 22, rate: 95 },
+  { name: 'Ocean View Penthouse', revenue: 12000000, bookings: 4, rate: 60 },
+];
+
+type ModuleType = 'overview' | 'inventory' | 'bookings' | 'finance' | 'team' | 'profile' | 'marketing' | 'reviews' | 'analytics' | 'audit' | 'subscription';
 
 interface OwnerDashboardProps {
   businessId: string;
@@ -43,6 +50,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
       operatingHours: biz.operatingHours || { open: '08:00', close: '22:00', days: 'Setiap Hari' },
       seoMetadata: biz.seoMetadata || { title: biz.name, description: biz.description, keywords: biz.category },
       logo: biz.logo || 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=200',
+      subscriptionExpiry: '2025-12-31'
     };
   });
 
@@ -50,6 +58,17 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
   const [bookings, setBookings] = useState<Booking[]>(MOCK_BOOKINGS.filter(b => b.businessId === business.id));
   const [localTransactions, setLocalTransactions] = useState<Transaction[]>(MOCK_TRANSACTIONS.filter(t => t.businessId === business.id));
   
+  // Reputation (Reviews) State
+  const [localReviews, setLocalReviews] = useState<Review[]>(MOCK_REVIEWS.filter(r => r.businessId === business.id));
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+
+  // Team Management State
+  const [staffList, setStaffList] = useState<User[]>(MOCK_USERS.filter(u => u.businessId === business.id && u.role === UserRole.ADMIN_STAFF));
+  const [isAddStaffModalOpen, setIsAddStaffModalOpen] = useState(false);
+  const [suspendedStaffIds, setSuspendedStaffIds] = useState<Set<string>>(new Set());
+  const AVAILABLE_PERMISSIONS = ['manage_bookings', 'inventory_ops', 'financial_view', 'maintenance_ops', 'marketing_access'];
+
   // Inventory Management State
   const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
@@ -196,6 +215,62 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
     alert('Permintaan Featured Listing telah dikirim ke Pusat Tata Kelola.');
   };
 
+  // Team Management Handlers
+  const handleAddStaff = (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget as HTMLFormElement);
+    const newStaff: User = {
+      id: `st-${Date.now()}`,
+      name: formData.get('name') as string,
+      email: formData.get('email') as string,
+      role: UserRole.ADMIN_STAFF,
+      businessId: business.id,
+      avatar: `https://i.pravatar.cc/150?u=${Date.now()}`,
+      createdAt: new Date().toISOString().split('T')[0],
+      permissions: ['manage_bookings'] // Default permission
+    };
+    setStaffList(prev => [...prev, newStaff]);
+    setIsAddStaffModalOpen(false);
+    alert(`Node Operator ${newStaff.name} berhasil dideploy.`);
+  };
+
+  const handleToggleStaffPermission = (staffId: string, permission: string) => {
+    setStaffList(prev => prev.map(s => {
+      if (s.id !== staffId) return s;
+      const current = s.permissions || [];
+      const updated = current.includes(permission) 
+        ? current.filter(p => p !== permission)
+        : [...current, permission];
+      return { ...s, permissions: updated };
+    }));
+  };
+
+  const handleToggleStaffStatus = (staffId: string) => {
+    setSuspendedStaffIds(prev => {
+      const next = new Set(prev);
+      if (next.has(staffId)) next.delete(staffId);
+      else next.add(staffId);
+      return next;
+    });
+  };
+
+  const handleResetStaffPassword = (name: string) => {
+    alert(`Reset link telah dikirim ke email ${name}.`);
+  };
+
+  // Reputation Handlers
+  const handleSubmitReviewReply = (reviewId: string) => {
+    if (!replyText.trim()) return;
+    setLocalReviews(prev => prev.map(r => r.id === reviewId ? { ...r, ownerReply: replyText } : r));
+    setReplyingTo(null);
+    setReplyText('');
+    alert('Balasan berhasil dipublikasikan.');
+  };
+
+  const handleReportReview = (reviewId: string) => {
+    alert(`Review ${reviewId} telah dilaporkan untuk moderasi keamanan.`);
+  };
+
   // Booking Actions
   const handleUpdateBookingStatus = (id: string, status: BookingStatus) => {
     setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
@@ -239,12 +314,13 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
       { id: 'bookings', label: 'Reservations', icon: 'fa-calendar-check', module: SystemModule.BOOKING },
       { id: 'inventory', label: 'Asset Matrix', icon: 'fa-door-open', module: SystemModule.INVENTORY },
       { id: 'finance', label: 'Treasury', icon: 'fa-receipt', module: SystemModule.PAYMENT },
+      { id: 'analytics', label: 'Evaluation Matrix', icon: 'fa-chart-mixed', module: null },
       { id: 'team', label: 'Operations Team', icon: 'fa-users-gear', module: SystemModule.TEAM },
       { id: 'marketing', label: 'Growth & Ads', icon: 'fa-rocket', module: SystemModule.MARKETING },
       { id: 'profile', label: 'Brand Identity', icon: 'fa-id-card', module: null },
       { id: 'reviews', label: 'Guest Feedback', icon: 'fa-comment-dots', module: SystemModule.REVIEWS },
-      { id: 'audit', label: 'Security Logs', icon: 'fa-shield-halved', module: null },
       { id: 'subscription', label: 'Plan & Billing', icon: 'fa-gem', module: null },
+      { id: 'audit', label: 'Security Logs', icon: 'fa-shield-halved', module: null },
     ];
     return items.filter(item => !item.module || activeModules.includes(item.module));
   }, [business.category, moduleConfigs]);
@@ -1177,6 +1253,556 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
     </div>
   );
 
+  const renderTeam = () => (
+    <div className="space-y-12 animate-fade-up">
+       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          <div>
+             <h3 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Operations Team Matrix</h3>
+             <p className="text-slate-400 text-sm font-medium">Manage operator nodes, assign authority levels, and monitor user lifecycle.</p>
+          </div>
+          <button 
+            onClick={() => setIsAddStaffModalOpen(true)}
+            className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all"
+          >
+            Deploy Staff Node
+          </button>
+       </div>
+
+       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          <div className="lg:col-span-2 space-y-8">
+             <div className="bg-white rounded-[48px] border border-slate-100 shadow-sm overflow-hidden">
+                <table className="w-full text-left">
+                   <thead className="bg-slate-50/50 border-b border-slate-100">
+                      <tr>
+                         <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Operator Identity</th>
+                         <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Authority Matrix</th>
+                         <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Protocol Status</th>
+                         <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                      </tr>
+                   </thead>
+                   <tbody className="divide-y divide-slate-50">
+                      {staffList.map(staff => (
+                        <tr key={staff.id} className={`hover:bg-slate-50/50 transition-colors ${suspendedStaffIds.has(staff.id) ? 'opacity-50' : ''}`}>
+                           <td className="px-8 py-6">
+                              <div className="flex items-center gap-4">
+                                 <img src={staff.avatar} className="w-12 h-12 rounded-xl object-cover shadow-sm ring-2 ring-white" />
+                                 <div>
+                                    <p className="font-black text-slate-900 uppercase text-xs">{staff.name}</p>
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase">{staff.email}</p>
+                                 </div>
+                              </div>
+                           </td>
+                           <td className="px-8 py-6">
+                              <div className="flex flex-wrap gap-1">
+                                 {staff.permissions?.map(p => (
+                                    <span key={p} className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[8px] font-black uppercase border border-indigo-100">
+                                       {p.replace('_', ' ')}
+                                    </span>
+                                 ))}
+                                 <button className="text-[8px] font-black text-indigo-600 hover:underline ml-1">Edit</button>
+                              </div>
+                           </td>
+                           <td className="px-8 py-6">
+                              <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border ${
+                                suspendedStaffIds.has(staff.id) ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                              }`}>
+                                 {suspendedStaffIds.has(staff.id) ? 'Suspended' : 'Operational'}
+                              </span>
+                           </td>
+                           <td className="px-8 py-6 text-right">
+                              <div className="flex justify-end gap-2">
+                                 <button 
+                                   onClick={() => handleResetStaffPassword(staff.name)}
+                                   className="p-2 bg-slate-50 text-slate-400 hover:text-indigo-600 rounded-lg transition-all"
+                                   title="Reset Password"
+                                 >
+                                    <i className="fas fa-key text-xs"></i>
+                                 </button>
+                                 <button 
+                                   onClick={() => handleToggleStaffStatus(staff.id)}
+                                   className={`p-2 rounded-lg transition-all ${
+                                      suspendedStaffIds.has(staff.id) ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
+                                   }`}
+                                   title={suspendedStaffIds.has(staff.id) ? 'Activate' : 'Suspend'}
+                                 >
+                                    <i className={`fas ${suspendedStaffIds.has(staff.id) ? 'fa-bolt' : 'fa-ban'} text-xs`}></i>
+                                 </button>
+                              </div>
+                           </td>
+                        </tr>
+                      ))}
+                   </tbody>
+                </table>
+             </div>
+
+             <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm space-y-8">
+                <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">Authority Level Mapping</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   {AVAILABLE_PERMISSIONS.map(p => (
+                      <div key={p} className="p-6 bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-between">
+                         <div>
+                            <p className="font-black text-slate-900 text-xs uppercase">{p.replace('_', ' ')}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">Grant access to {p.split('_')[0]} system nodes.</p>
+                         </div>
+                         <i className="fas fa-shield-halved text-indigo-200"></i>
+                      </div>
+                   ))}
+                </div>
+             </div>
+          </div>
+
+          <div className="space-y-8">
+             <div className="bg-slate-950 p-10 rounded-[48px] shadow-2xl text-white space-y-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl"></div>
+                <h4 className="text-xl font-black tracking-tight uppercase">Live Activity Trace</h4>
+                <div className="space-y-6">
+                   {[
+                      { actor: 'Sarah Staff', action: 'Verified Payment BK-1022', time: '12m ago' },
+                      { actor: 'Budi Santoso', action: 'Updated Unit DELUXE-3', time: '45m ago' },
+                      { actor: 'Sarah Staff', action: 'Guest Check-in: G-Node-99', time: '2h ago' }
+                   ].map((log, i) => (
+                      <div key={i} className="flex gap-4 items-start">
+                         <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full mt-1.5 shadow-[0_0_8px_rgba(99,102,241,0.6)]"></div>
+                         <div>
+                            <p className="text-xs font-black text-indigo-300 uppercase">{log.actor}</p>
+                            <p className="text-[10px] text-white/60 font-medium">{log.action}</p>
+                            <p className="text-[8px] text-white/20 font-bold mt-1">{log.time}</p>
+                         </div>
+                      </div>
+                   ))}
+                </div>
+             </div>
+
+             <div className="bg-indigo-600 p-10 rounded-[48px] shadow-xl text-white space-y-6">
+                <h4 className="text-lg font-black tracking-tight uppercase">Operational Security</h4>
+                <p className="text-xs font-medium opacity-80 leading-relaxed">Ensure all staff nodes have individual identity credentials. Sharing security keys is a violation of platform protocols.</p>
+                <button className="w-full py-4 bg-white/10 backdrop-blur rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/20 transition-all">Audit Security Matrix</button>
+             </div>
+          </div>
+       </div>
+
+       {/* Add Staff Modal */}
+       {isAddStaffModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
+             <div className="bg-white w-full max-w-xl rounded-[56px] shadow-2xl p-12 space-y-10 relative">
+                <button onClick={() => setIsAddStaffModalOpen(false)} className="absolute top-10 right-10 w-12 h-12 bg-slate-50 text-slate-400 hover:text-slate-900 rounded-2xl flex items-center justify-center transition-all">
+                  <i className="fas fa-times"></i>
+                </button>
+                
+                <div>
+                   <h3 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Enroll Operator Node</h3>
+                   <p className="text-slate-400 text-sm font-medium">Inject a new staff identity into the business ecosystem.</p>
+                </div>
+
+                <form onSubmit={handleAddStaff} className="space-y-6">
+                   <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Legal Name</label>
+                      <input name="name" required placeholder="Full name" className="w-full bg-slate-50 border border-slate-200 rounded-3xl px-8 py-4 font-black text-slate-900 outline-none focus:ring-4 ring-indigo-50" />
+                   </div>
+                   <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Identity Node (Email)</label>
+                      <input name="email" type="email" required placeholder="staff@business.com" className="w-full bg-slate-50 border border-slate-200 rounded-3xl px-8 py-4 font-black text-slate-900 outline-none focus:ring-4 ring-indigo-50" />
+                   </div>
+                   <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4 text-center">Initial Authorization Key</p>
+                      <p className="text-center font-mono text-xs font-bold text-slate-400 italic">Temporal password will be dispatched to staff email.</p>
+                   </div>
+                   <div className="pt-6 flex gap-4">
+                      <button type="button" onClick={() => setIsAddStaffModalOpen(false)} className="flex-1 py-5 bg-slate-100 text-slate-500 rounded-3xl font-black text-xs uppercase tracking-widest">Abort Cycle</button>
+                      <button type="submit" className="flex-1 py-5 bg-indigo-600 text-white rounded-3xl font-black text-xs uppercase tracking-widest shadow-2xl hover:bg-indigo-700 transition-all">Deploy Node</button>
+                   </div>
+                </form>
+             </div>
+          </div>
+       )}
+    </div>
+  );
+
+  const renderReviews = () => {
+    const avgRating = localReviews.reduce((sum, r) => sum + r.rating, 0) / localReviews.length;
+    const ratingDist = [
+      { stars: 5, count: localReviews.filter(r => r.rating === 5).length },
+      { stars: 4, count: localReviews.filter(r => r.rating === 4).length },
+      { stars: 3, count: localReviews.filter(r => r.rating === 3).length },
+      { stars: 2, count: localReviews.filter(r => r.rating === 2).length },
+      { stars: 1, count: localReviews.filter(r => r.rating === 1).length },
+    ];
+
+    return (
+      <div className="space-y-12 animate-fade-up">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          <div>
+             <h3 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Guest Feedback Hub</h3>
+             <p className="text-slate-400 text-sm font-medium">Protect and monitor your business reputation within the SEULANGA ecosystem.</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          <div className="lg:col-span-2 space-y-8">
+             {/* Feedback List */}
+             <div className="space-y-6">
+                {localReviews.map(review => (
+                   <div key={review.id} className="bg-white rounded-[40px] border border-slate-100 p-10 shadow-sm space-y-8 hover:shadow-xl transition-all duration-500 group">
+                      <div className="flex justify-between items-start">
+                         <div className="flex items-center gap-5">
+                            <img src={`https://i.pravatar.cc/150?u=${review.guestId}`} className="w-14 h-14 rounded-2xl object-cover ring-4 ring-slate-50 shadow-sm" />
+                            <div>
+                               <h4 className="text-lg font-black text-slate-900 uppercase tracking-tight">{review.guestName}</h4>
+                               <p className="text-[10px] font-bold text-slate-400 uppercase">{review.createdAt}</p>
+                            </div>
+                         </div>
+                         <div className="flex flex-col items-end gap-3">
+                            <div className="flex text-amber-400 text-sm">
+                               {[...Array(5)].map((_, i) => (
+                                 <i key={i} className={`${i < review.rating ? 'fas' : 'far'} fa-star`}></i>
+                               ))}
+                            </div>
+                            <button onClick={() => handleReportReview(review.id)} className="p-2 text-slate-300 hover:text-rose-500 transition-colors" title="Report Issue">
+                               <i className="fas fa-flag-checkered text-xs"></i>
+                            </button>
+                         </div>
+                      </div>
+
+                      <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                         <p className="text-slate-600 leading-relaxed font-medium italic">"{review.comment}"</p>
+                      </div>
+
+                      {review.ownerReply ? (
+                        <div className="ml-10 p-8 bg-indigo-50 border border-indigo-100 rounded-[32px] space-y-4 relative">
+                           <div className="absolute top-4 left-[-15px] w-6 h-6 bg-indigo-50 rotate-45 border-l border-b border-indigo-100"></div>
+                           <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
+                                 <i className="fas fa-reply text-[10px]"></i>
+                              </div>
+                              <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Business Reply</p>
+                           </div>
+                           <p className="text-sm font-bold text-slate-700 leading-relaxed">{review.ownerReply}</p>
+                           <button onClick={() => setReplyingTo(review.id)} className="text-[9px] font-black text-indigo-400 uppercase tracking-widest hover:underline">Edit Reply</button>
+                        </div>
+                      ) : (
+                        <div className="flex justify-end">
+                           {replyingTo === review.id ? (
+                             <div className="w-full space-y-4 animate-in slide-in-from-top-2">
+                                <textarea 
+                                  value={replyText}
+                                  onChange={(e) => setReplyText(e.target.value)}
+                                  placeholder="Tulis balasan profesional Anda..."
+                                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-6 text-sm font-medium focus:ring-4 ring-indigo-50 outline-none resize-none"
+                                  rows={4}
+                                ></textarea>
+                                <div className="flex justify-end gap-3">
+                                   <button onClick={() => setReplyingTo(null)} className="px-6 py-3 text-[10px] font-black uppercase text-slate-400 hover:text-slate-600">Batal</button>
+                                   <button onClick={() => handleSubmitReviewReply(review.id)} className="px-8 py-3 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-indigo-100">Submit Reply</button>
+                                </div>
+                             </div>
+                           ) : (
+                             <button 
+                               onClick={() => setReplyingTo(review.id)}
+                               className="px-8 py-3 bg-white border border-indigo-100 text-indigo-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                             >
+                               Balas Review
+                             </button>
+                           )}
+                        </div>
+                      )}
+                   </div>
+                ))}
+             </div>
+          </div>
+
+          <div className="space-y-8">
+             {/* Rating Analytics Card */}
+             <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm space-y-10">
+                <div className="text-center">
+                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Core Trust Score</h4>
+                   <div className="text-6xl font-black text-slate-900 tracking-tighter mb-4">{avgRating.toFixed(1)}</div>
+                   <div className="flex justify-center text-amber-400 gap-1 text-lg mb-4">
+                      {[...Array(5)].map((_, i) => <i key={i} className="fas fa-star"></i>)}
+                   </div>
+                   <p className="text-xs font-bold text-slate-500">Based on {localReviews.length} guest logs</p>
+                </div>
+
+                <div className="space-y-4">
+                   <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50 pb-4">Star Distribution Matrix</h5>
+                   {ratingDist.map(d => (
+                      <div key={d.stars} className="flex items-center gap-4">
+                         <span className="text-[10px] font-black text-slate-400 w-4">{d.stars}</span>
+                         <div className="flex-1 h-2 bg-slate-50 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-indigo-600 rounded-full transition-all duration-1000" 
+                              style={{ width: `${(d.count / localReviews.length) * 100}%` }}
+                            ></div>
+                         </div>
+                         <span className="text-[10px] font-black text-slate-900 w-8 text-right">{d.count}</span>
+                      </div>
+                   ))}
+                </div>
+             </div>
+
+             {/* AI Reputation Insights */}
+             <div className="bg-slate-950 p-10 rounded-[48px] shadow-2xl text-white space-y-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl"></div>
+                <div className="flex items-center gap-4 relative z-10">
+                   <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
+                      <i className="fas fa-brain text-sm"></i>
+                   </div>
+                   <h4 className="font-black text-sm uppercase tracking-tighter">AI Sentiment Pulse</h4>
+                </div>
+                <p className="text-xs font-medium text-indigo-100/60 leading-relaxed italic relative z-10">
+                   "Guests are highly satisfied with the cleanliness protocols but suggested minor improvements to the evening room service speed."
+                </p>
+                <div className="pt-6 border-t border-white/5 relative z-10">
+                   <div className="flex justify-between items-center mb-2">
+                      <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Sentiment Index</span>
+                      <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Positive (92%)</span>
+                   </div>
+                   <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500 w-[92%] rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+                   </div>
+                </div>
+             </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderAnalytics = () => (
+    <div className="space-y-12 animate-fade-up">
+       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          <div>
+             <h3 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Business Evaluation Matrix</h3>
+             <p className="text-slate-400 text-sm font-medium">Deep telemetry analysis of revenue, occupancy, and asset productivity.</p>
+          </div>
+          <div className="flex gap-4">
+             <button onClick={() => alert('Exporting evaluation thread to Excel... Protocol Authorized.')} className="px-6 py-4 bg-white border border-slate-200 text-slate-700 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-3">
+                <i className="fas fa-file-excel text-emerald-600"></i> Export Excel
+             </button>
+             <button onClick={() => alert('Generating cryptographic PDF evaluation report...')} className="px-6 py-4 bg-slate-950 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 transition-all flex items-center gap-3 shadow-xl">
+                <i className="fas fa-file-pdf text-rose-500"></i> Generate PDF
+             </button>
+          </div>
+       </div>
+
+       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          <div className="lg:col-span-2 bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm space-y-10">
+             <div className="flex items-center justify-between">
+                <h4 className="text-xl font-black text-slate-900 tracking-tight uppercase">Revenue Analytics (Monthly)</h4>
+                <div className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full uppercase tracking-widest">Growth +18.4%</div>
+             </div>
+             <div className="h-[350px]">
+                <ResponsiveContainer width="100%" height="100%">
+                   <BarChart data={revenueData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 800}} />
+                      <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 800}} />
+                      <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)'}} />
+                      <Bar dataKey="revenue" radius={[10, 10, 0, 0]}>
+                         {revenueData.map((entry, index) => (
+                           <Cell key={`cell-${index}`} fill={index === revenueData.length - 1 ? '#4f46e5' : '#e2e8f0'} />
+                         ))}
+                      </Bar>
+                   </BarChart>
+                </ResponsiveContainer>
+             </div>
+          </div>
+
+          <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm space-y-8">
+             <h4 className="text-xl font-black text-slate-900 tracking-tight uppercase text-center">Occupancy Velocity</h4>
+             <div className="flex justify-center py-6">
+                <div className="relative w-48 h-48">
+                   <svg className="w-full h-full" viewBox="0 0 100 100">
+                      <circle className="text-slate-100 stroke-current" strokeWidth="10" fill="transparent" r="40" cx="50" cy="50" />
+                      <circle className="text-indigo-600 stroke-current" strokeWidth="10" strokeLinecap="round" fill="transparent" r="40" cx="50" cy="50" 
+                        strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * 0.88)} />
+                   </svg>
+                   <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-4xl font-black text-slate-900">88%</span>
+                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Average rate</span>
+                   </div>
+                </div>
+             </div>
+             <div className="space-y-4">
+                <div className="p-5 bg-slate-50 rounded-3xl flex justify-between items-center">
+                   <span className="text-[10px] font-black text-slate-400 uppercase">Available Nodes</span>
+                   <span className="text-sm font-black text-slate-900">2 Units</span>
+                </div>
+                <div className="p-5 bg-slate-50 rounded-3xl flex justify-between items-center">
+                   <span className="text-[10px] font-black text-slate-400 uppercase">Booked Nodes</span>
+                   <span className="text-sm font-black text-slate-900">10 Units</span>
+                </div>
+             </div>
+          </div>
+       </div>
+
+       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+          <div className="bg-white p-12 rounded-[56px] border border-slate-100 shadow-sm space-y-10">
+             <h4 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">Asset Productivity Ranking</h4>
+             <div className="space-y-6">
+                {unitPerformanceData.map((unit, idx) => (
+                   <div key={idx} className="space-y-3">
+                      <div className="flex justify-between items-end">
+                         <div>
+                            <p className="text-sm font-black text-slate-900 uppercase">{unit.name}</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase">{unit.bookings} Bookings • Rp {unit.revenue.toLocaleString()}</p>
+                         </div>
+                         <span className="text-xs font-black text-indigo-600">{unit.rate}% Eff.</span>
+                      </div>
+                      <div className="w-full h-2 bg-slate-50 rounded-full overflow-hidden">
+                         <div className="h-full bg-indigo-600 rounded-full" style={{ width: `${unit.rate}%` }}></div>
+                      </div>
+                   </div>
+                ))}
+             </div>
+          </div>
+
+          <div className="bg-slate-950 p-12 rounded-[56px] shadow-2xl text-white space-y-10 relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl"></div>
+             <h4 className="text-2xl font-black tracking-tighter uppercase">Evaluative Booking Report</h4>
+             <div className="space-y-4 max-h-[400px] overflow-y-auto scrollbar-hide pr-2">
+                {bookings.map(bk => (
+                   <div key={bk.id} className="p-6 bg-white/5 border border-white/10 rounded-3xl flex justify-between items-center hover:bg-white/10 transition-all cursor-pointer">
+                      <div>
+                         <p className="text-xs font-black uppercase text-indigo-400">Node: {bk.id.toUpperCase()}</p>
+                         <p className="text-[10px] font-bold text-white/40">{bk.createdAt} | {bk.status}</p>
+                      </div>
+                      <div className="text-right">
+                         <p className="font-black text-emerald-400">Rp {bk.totalPrice.toLocaleString()}</p>
+                         <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Net Thread Clear</p>
+                      </div>
+                   </div>
+                ))}
+             </div>
+             <button className="w-full py-4 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/5 transition-all">Audit Full Lifecycle History</button>
+          </div>
+       </div>
+    </div>
+  );
+
+  const renderSubscription = () => {
+    const plans = [
+      { id: 'BASIC', name: 'Basic Access', price: 'Free', commission: '15%', units: '10 Units', features: ['Standard Support', 'Core Modules', 'Manual Payouts'], color: 'text-slate-400', bg: 'bg-slate-50' },
+      { id: 'PRO', name: 'Growth Pro', price: 'Rp 499K/mo', commission: '10%', units: '50 Units', features: ['Priority Support', 'Advanced Analytics', 'SMS Alerts'], color: 'text-indigo-600', bg: 'bg-indigo-50' },
+      { id: 'PREMIUM', name: 'Elite Premium', price: 'Rp 1.2M/mo', commission: '5%', units: 'Unlimited', features: ['Dedicated Manager', 'AI Intelligence', 'Cryptographic Exports'], color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    ];
+
+    return (
+      <div className="space-y-12 animate-fade-up">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          <div className="lg:col-span-2 bg-white p-12 rounded-[56px] border border-slate-100 shadow-sm space-y-10">
+            <div className="flex items-center justify-between">
+               <div>
+                  <h3 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Plan & Subscription Node</h3>
+                  <p className="text-slate-400 text-sm font-medium">Orchestrate your business economic scale.</p>
+               </div>
+               <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center text-2xl shadow-inner border border-indigo-100">
+                  <i className="fas fa-gem"></i>
+               </div>
+            </div>
+
+            <div className="p-10 bg-slate-950 rounded-[48px] text-white space-y-8 relative overflow-hidden shadow-2xl">
+               <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+               <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
+                  <div>
+                     <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-3">Current Active Protocol</p>
+                     <h4 className="text-5xl font-black tracking-tighter uppercase mb-2">{business.subscription} Plan</h4>
+                     <p className="text-indigo-200/60 font-medium italic">Your node access is verified and operational.</p>
+                  </div>
+                  <div className="text-center md:text-right">
+                     <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Registry Lifecycle</p>
+                     <p className="text-2xl font-black text-emerald-400">Expires: {business.subscriptionExpiry || '2025-12-31'}</p>
+                     <p className="text-[9px] font-bold text-white/20 uppercase mt-2">Auto-renewal enabled</p>
+                  </div>
+               </div>
+               
+               <div className="pt-8 border-t border-white/5 grid grid-cols-2 md:grid-cols-4 gap-6">
+                  <div>
+                     <p className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-1">Commission Node</p>
+                     <p className="text-lg font-black text-indigo-400">{business.subscription === 'Premium' ? '5%' : business.subscription === 'Pro' ? '10%' : '15%'}</p>
+                  </div>
+                  <div>
+                     <p className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-1">Asset Limit</p>
+                     <p className="text-lg font-black text-indigo-400">{business.subscription === 'Premium' ? 'Unlimited' : business.subscription === 'Pro' ? '50 Units' : '10 Units'}</p>
+                  </div>
+                  <div>
+                     <p className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-1">Service Level</p>
+                     <p className="text-lg font-black text-indigo-400">99.9% Up</p>
+                  </div>
+                  <div>
+                     <p className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-1">Governance</p>
+                     <p className="text-lg font-black text-indigo-400">Verified</p>
+                  </div>
+               </div>
+            </div>
+
+            <div className="space-y-6">
+               <h4 className="text-xl font-black text-slate-900 tracking-tight uppercase">Upgrade / Transition Node</h4>
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {plans.map(p => (
+                    <div key={p.id} className={`p-8 rounded-[40px] border transition-all flex flex-col justify-between group ${business.subscription.toUpperCase() === p.id ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-slate-100 hover:border-indigo-100 hover:shadow-xl'}`}>
+                       <div>
+                          <div className="flex justify-between items-start mb-6">
+                             <div className={`w-10 h-10 ${p.bg} ${p.color} rounded-xl flex items-center justify-center border border-current opacity-60`}>
+                                <i className={`fas ${p.id === 'BASIC' ? 'fa-leaf' : p.id === 'PRO' ? 'fa-rocket' : 'fa-gem'}`}></i>
+                             </div>
+                             {business.subscription.toUpperCase() === p.id && (
+                               <span className="text-[8px] font-black bg-indigo-600 text-white px-2 py-1 rounded-md uppercase">Current</span>
+                             )}
+                          </div>
+                          <h5 className="font-black text-slate-900 uppercase text-sm mb-1">{p.name}</h5>
+                          <p className="text-lg font-black text-indigo-600 mb-6">{p.price}</p>
+                          <ul className="space-y-3 mb-8">
+                             <li className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase"><i className="fas fa-check text-emerald-500"></i> {p.commission} Com.</li>
+                             <li className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase"><i className="fas fa-check text-emerald-500"></i> {p.units} Limit</li>
+                             {p.features.map(f => (
+                               <li key={f} className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase"><i className="fas fa-plus text-indigo-300"></i> {f}</li>
+                             ))}
+                          </ul>
+                       </div>
+                       {business.subscription.toUpperCase() !== p.id && (
+                         <button onClick={() => alert(`Initiating transition protocol to ${p.id}. Redirecting to Treasury Checkout.`)} className="w-full py-3 bg-slate-950 text-white rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-indigo-600 transition-all">Authorize Plan</button>
+                       )}
+                    </div>
+                  ))}
+               </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-12 rounded-[56px] border border-slate-100 shadow-sm space-y-10">
+             <div className="flex items-center justify-between">
+                <h4 className="text-xl font-black text-slate-900 tracking-tight uppercase">Invoice History</h4>
+                <div className="w-10 h-10 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center"><i className="fas fa-file-invoice"></i></div>
+             </div>
+             
+             <div className="space-y-4">
+                {localTransactions.filter(t => t.type === 'subscription').map(tx => (
+                   <div key={tx.id} className="p-6 bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-between hover:border-indigo-200 transition-all cursor-pointer group">
+                      <div>
+                         <p className="text-xs font-black text-slate-900 uppercase mb-1">Invoice #{tx.id.toUpperCase()}</p>
+                         <p className="text-[10px] font-bold text-slate-400 uppercase">{tx.createdAt}</p>
+                      </div>
+                      <div className="text-right">
+                         <p className="font-black text-slate-900">Rp {tx.amount.toLocaleString()}</p>
+                         <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-md ${tx.status === 'completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>{tx.status}</span>
+                      </div>
+                      <button className="ml-4 p-2 bg-white text-slate-300 rounded-lg group-hover:text-indigo-600 group-hover:border-indigo-600 border border-transparent transition-all">
+                         <i className="fas fa-download text-xs"></i>
+                      </button>
+                   </div>
+                ))}
+             </div>
+
+             <div className="p-8 bg-indigo-600 rounded-[40px] shadow-xl text-white space-y-6">
+                <h4 className="text-sm font-black uppercase tracking-widest">Platform Support Node</h4>
+                <p className="text-xs leading-relaxed font-medium opacity-80">Having trouble with billing cycles or plan authorizations? Open a high-priority ticket with our governance team.</p>
+                <button className="w-full py-4 bg-white/10 backdrop-blur rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/20 transition-all">Contact Billing Node</button>
+             </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderProfile = () => (
     <div className="max-w-6xl mx-auto space-y-12 animate-fade-up pb-20">
       {/* Header Profile Section */}
@@ -1356,10 +1982,9 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
             </div>
           </div>
         </div>
-      </div>
 
-      {/* User Personal Profile Section (Original) */}
-      <div className="bg-white p-12 rounded-[48px] border border-slate-100 shadow-sm overflow-hidden relative">
+        {/* User Personal Profile Section */}
+        <div className="bg-white p-12 rounded-[48px] border border-slate-100 shadow-sm overflow-hidden relative">
           <div className="absolute top-0 left-0 w-80 h-80 bg-slate-50 rounded-full blur-3xl -ml-40 -mt-40 opacity-40"></div>
           
           <div className="relative z-10">
@@ -1420,10 +2045,9 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
              </form>
           </div>
        </div>
+      </div>
     </div>
   );
-
-  const navItemsFiltered = navItems;
 
   return (
     <div className="flex h-screen bg-[#f8fafc] overflow-hidden">
@@ -1440,7 +2064,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto p-6 space-y-1.5 scrollbar-hide">
-           {navItemsFiltered.map(item => (
+           {navItems.map(item => (
              <button 
                 key={item.id}
                 onClick={() => setActiveModule(item.id as ModuleType)}
@@ -1477,8 +2101,12 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ businessId, modu
             {activeModule === 'bookings' && renderBookings()}
             {activeModule === 'finance' && renderFinance()}
             {activeModule === 'marketing' && renderMarketing()}
+            {activeModule === 'team' && renderTeam()}
+            {activeModule === 'reviews' && renderReviews()}
+            {activeModule === 'analytics' && renderAnalytics()}
+            {activeModule === 'subscription' && renderSubscription()}
             {activeModule === 'profile' && renderProfile()}
-            {['team', 'reviews', 'audit', 'subscription'].includes(activeModule) && activeModule !== 'profile' && (
+            {['audit'].includes(activeModule) && (
               <div className="py-40 text-center animate-fade-up">
                  <h3 className="text-3xl font-black text-slate-900 mb-4 uppercase tracking-tighter">{activeModule} Core Node</h3>
                  <p className="text-slate-500 font-medium max-w-md mx-auto">Interface for {activeModule} management.</p>
