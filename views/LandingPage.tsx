@@ -34,13 +34,37 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, onSelectPr
       nav: { home: 'Beranda', features: 'Fitur', pricing: 'Harga', how: 'Cara Kerja', contact: 'Kontak', login: 'Masuk', register: 'Daftar Bisnis' },
       hero: { badge: 'Sistem Operasi Hospitality Masa Depan', h1_1: 'REDEFINISI', h1_italic: 'SISTEMIK', h1_2: 'PROPERTI.', p: 'Ekosistem multi-tenant absolut yang dirancang untuk mengorkestrasi hotel, homestay, dan penyewaan properti elit dengan presisi tingkat militer.', btn_trial: 'Mulai Uji Coba 14 Hari', btn_explore: 'Eksplorasi Pasar' },
       problem: { title: 'Kekacauan Operasional', title_span: 'Berhenti di Sini.', sub: '"Manajemen properti seharusnya tidak terasa seperti memadamkan api."', q1: 'Data Terfragmentasi?', a1: 'Sentralisasikan hotel, unit, dan log staf Anda dalam satu node yang tidak dapat diubah.', q2: 'Sengketa Pembayaran?', a2: 'Invoicing digital otomatis dengan verifikasi kriptografi untuk setiap transaksi.', q3: 'Pemasaran Tak Terlihat?', a3: 'Mesin pasar tertanam meningkatkan visibilitas Anda ke ribuan tamu terverifikasi.' },
-      pricing: { title: 'Node Langganan', h3: 'Skala dengan Ambisi Anda.', p: 'Pilih paket yang sesuai dengan skala operasional Anda saat ini. Tanpa biaya payload tersembunyi.' }
+      pricing: { title: 'Node Langganan', h3: 'Skala dengan Ambisi Anda.', p: 'Pilih paket yang sesuai dengan skala operasional Anda saat ini. Tanpa biaya payload tersembunyi.' },
+      contact_hub: { 
+        title: 'Hub Kontak & Kantor Pusat', 
+        sub: 'Hubungi tim ahli kami untuk konsultasi integrasi aset dan bantuan teknis 24/7.',
+        office: 'Alamat Kantor Pusat',
+        office_detail: 'Gedung Seulanga Tech, Lantai 4, Jl. Teuku Umar No. 122, Banda Aceh, Aceh - 23122',
+        call_center: 'Pusat Panggilan (24 Jam)',
+        email: 'Surel Dukungan Resmi',
+        hours: 'Jam Operasional Kantor',
+        hours_detail: 'Senin - Jumat: 08:00 - 18:00 WIB',
+        btn_wa: 'Chat WhatsApp Sekarang',
+        map_title: 'Lokasi Strategis Kami'
+      }
     },
     en: {
       nav: { home: 'Home', features: 'Features', pricing: 'Pricing', how: 'How It Works', contact: 'Contact', login: 'Login', register: 'Register Business' },
       hero: { badge: 'Next-Gen Hospitality OS', h1_1: 'REDEFINING', h1_italic: 'SYSTEMIC', h1_2: 'PROPERTY.', p: 'The absolute multi-tenant ecosystem designed to orchestrate hotels, homestays, and elite property rentals with military-grade precision.', btn_trial: 'Start 14-Day Free Trial', btn_explore: 'Explore Marketplace' },
       problem: { title: 'Operational Chaos', title_span: 'Stops Here.', sub: '"Property management shouldn\'t feel like fire-fighting."', q1: 'Fragmented Data?', a1: 'Centralize your hotels, units, and staff logs in a single immutable node.', q2: 'Payment Disputes?', a2: 'Automated digital invoicing with cryptographic verification for every transaction.', q3: 'Invisible Marketing?', a3: 'Embedded marketplace engine boosts your visibility to thousands of verified guests.' },
-      pricing: { title: 'Subscription Nodes', h3: 'Scale with Your Ambition.', p: 'Choose a plan that fits your current operational scale. No hidden payload fees.' }
+      pricing: { title: 'Subscription Nodes', h3: 'Scale with Your Ambition.', p: 'Choose a plan that fits your current operational scale. No hidden payload fees.' },
+      contact_hub: { 
+        title: 'Contact Hub & Headquarters', 
+        sub: 'Reach out to our experts for asset integration consultation and 24/7 technical support.',
+        office: 'Headquarters Address',
+        office_detail: 'Seulanga Tech Building, 4th Floor, Jl. Teuku Umar No. 122, Banda Aceh, Aceh - 23122',
+        call_center: 'Call Center (24 Hours)',
+        email: 'Official Support Email',
+        hours: 'Office Operating Hours',
+        hours_detail: 'Monday - Friday: 08:00 - 18:00 WIB',
+        btn_wa: 'Chat WhatsApp Now',
+        map_title: 'Our Strategic Location'
+      }
     }
   }[language]), [language]);
 
@@ -75,14 +99,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, onSelectPr
             <div className="relative">
               <button 
                 onClick={() => setShowLangDropdown(!showLangDropdown)}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all"
+                className="flex items-center gap-2 px-4 py-2 bg-white/50 hover:bg-white border border-slate-200 rounded-xl transition-all shadow-sm"
               >
                 <img src={language === 'id' ? "https://flagcdn.com/w40/id.png" : "https://flagcdn.com/w40/us.png"} className="w-5 h-3.5 object-cover rounded shadow-sm" alt="flag" />
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">{language}</span>
                 <i className={`fas fa-chevron-down text-[8px] transition-transform ${showLangDropdown ? 'rotate-180' : ''}`}></i>
               </button>
               {showLangDropdown && (
-                <div className="absolute right-0 mt-3 w-40 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 animate-in zoom-in-95 fade-in duration-200">
+                <div className="absolute right-0 mt-3 w-40 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 animate-in zoom-in-95 fade-in duration-200 z-[110]">
                   <button onClick={() => { onLanguageChange('id'); setShowLangDropdown(false); }} className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all ${language === 'id' ? 'bg-indigo-50 text-indigo-600' : 'hover:bg-slate-50 text-slate-600'}`}>
                     <img src="https://flagcdn.com/w40/id.png" className="w-5 h-3.5 object-cover rounded shadow-sm" alt="id" />
                     <span className="text-[10px] font-black uppercase tracking-widest">Bahasa</span>
@@ -96,7 +120,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, onSelectPr
             </div>
 
             <button onClick={() => onNavigate('login')} className="hidden sm:block text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-indigo-600 transition-colors px-6 py-3">{d.nav.login}</button>
-            <button onClick={() => onNavigate('register')} className="bg-slate-900 text-white px-8 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-indigo-600 transition-all active:scale-95">{d.nav.register}</button>
+            <button onClick={() => onNavigate('register')} className="bg-slate-950 text-white px-8 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-indigo-600 transition-all active:scale-95">{d.nav.register}</button>
             <button className="lg:hidden w-12 h-12 flex items-center justify-center text-slate-900" onClick={() => setIsMenuOpen(!isMenuOpen)}>
               <i className={`fas ${isMenuOpen ? 'fa-times' : 'fa-bars-staggered'} text-xl`}></i>
             </button>
@@ -105,7 +129,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, onSelectPr
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="lg:hidden absolute top-full left-0 right-0 bg-white border-t border-slate-100 p-8 shadow-2xl animate-in slide-in-from-top-4">
+          <div className="lg:hidden absolute top-full left-0 right-0 bg-white border-t border-slate-100 p-8 shadow-2xl animate-in slide-in-from-top-4 z-50">
             <div className="flex flex-col gap-6">
               {['Home', 'Features', 'Pricing', 'How It Works', 'Marketplace', 'Contact'].map((link) => (
                 <button 
@@ -149,7 +173,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, onSelectPr
               </div>
               <div className="flex items-center gap-6 pt-4">
                  <div className="flex -space-x-4">
-                    {[1,2,3,4].map(i => <img key={i} src={`https://i.pravatar.cc/100?u=saas${i}`} className="w-10 h-10 rounded-full border-4 border-white shadow-sm" />)}
+                    {[1,2,3,4].map(i => <img key={i} src={`https://i.pravatar.cc/100?u=saas${i}`} className="w-10 h-10 rounded-full border-4 border-white shadow-sm" alt="user" />)}
                  </div>
                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Trusted by 500+ Property Owners</p>
               </div>
@@ -246,7 +270,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, onSelectPr
               { title: "Role Management", desc: "Granular access for Owners, Staff, and Central Admins.", icon: "fa-users-cog" },
               { title: "Asset Matrix", desc: "Inventory management for rooms, units, or whole complexes.", icon: "fa-sitemap" },
               { title: "Reputation Hub", desc: "Verified review system with deep sentiment analytics.", icon: "fa-star-half-stroke" },
-              { title: "Growth Analytics", desc: "Visualize revenue trajectory and occupancy velocities.", icon: "fa-chart-mixed" },
+              { title: "Growth Analytics", desc: "Visualize revenue trajectory and occupancy velocities.", icon: "fa-chart-pie" },
               { title: "Unified Comms", desc: "Direct messaging channels between property and guest.", icon: "fa-comment-dots" },
               { title: "Flex Pricing", desc: "Dynamic rules for seasonal, weekend, or bulk adjustments.", icon: "fa-tags" },
             ].map((f, i) => (
@@ -282,10 +306,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, onSelectPr
                 { name: "Property Sales", icon: "fa-city", count: 150, img: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400" },
                 { name: "Guesthouses", icon: "fa-hotel", count: 210, img: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400" },
                 { name: "Housing complexes", icon: "fa-house-flag", count: 85, img: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400" },
-                { name: "Resorts", icon: "fa-palmtree", count: 45, img: "https://images.unsplash.com/photo-1540541338287-41700207dee6?w=400" },
+                { name: "Resorts", icon: "fa-umbrella-beach", count: 45, img: "https://images.unsplash.com/photo-1540541338287-41700207dee6?w=400" },
               ].map((cat, i) => (
                 <div key={i} className="group relative h-80 rounded-[40px] overflow-hidden cursor-pointer shadow-sm hover:shadow-2xl transition-all duration-700">
-                   <img src={cat.img} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                   <img src={cat.img} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" alt={cat.name} />
                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
                    <div className="absolute bottom-8 left-8 right-8 space-y-3">
                       <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white border border-white/20">
@@ -406,8 +430,81 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, onSelectPr
          </div>
       </section>
 
+      {/* --- NEW: CONTACT HUB SECTION --- */}
+      <section id="contact" className="py-32 bg-white relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6">
+           <div className="grid lg:grid-cols-2 gap-24">
+              <div className="space-y-12">
+                 <div className="space-y-6">
+                    <h2 className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.4em]">{d.nav.contact} Node</h2>
+                    <h3 className="text-5xl font-black text-slate-900 tracking-tighter uppercase leading-[0.9]">{d.contact_hub.title}</h3>
+                    <p className="text-lg text-slate-500 font-medium leading-relaxed">{d.contact_hub.sub}</p>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="p-8 bg-slate-50 rounded-[40px] border border-slate-100 space-y-4 group hover:border-indigo-200 transition-all">
+                       <div className="w-12 h-12 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                          <i className="fas fa-map-location-dot"></i>
+                       </div>
+                       <h5 className="font-black text-slate-900 uppercase text-xs tracking-widest">{d.contact_hub.office}</h5>
+                       <p className="text-xs text-slate-500 font-bold leading-relaxed">{d.contact_hub.office_detail}</p>
+                    </div>
+
+                    <div className="p-8 bg-slate-50 rounded-[40px] border border-slate-100 space-y-4 group hover:border-emerald-200 transition-all">
+                       <div className="w-12 h-12 bg-emerald-600 text-white rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                          <i className="fas fa-phone-volume"></i>
+                       </div>
+                       <h5 className="font-black text-slate-900 uppercase text-xs tracking-widest">{d.contact_hub.call_center}</h5>
+                       <p className="text-lg font-black text-slate-900 tracking-tighter">+62 (231) 555-0199</p>
+                    </div>
+
+                    <div className="p-8 bg-slate-50 rounded-[40px] border border-slate-100 space-y-4 group hover:border-indigo-200 transition-all">
+                       <div className="w-12 h-12 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                          <i className="fas fa-envelope-open-text"></i>
+                       </div>
+                       <h5 className="font-black text-slate-900 uppercase text-xs tracking-widest">{d.contact_hub.email}</h5>
+                       <p className="text-xs text-indigo-600 font-black tracking-widest uppercase">support@seulanga.com</p>
+                    </div>
+
+                    <div className="p-8 bg-slate-50 rounded-[40px] border border-slate-100 space-y-4 group hover:border-amber-200 transition-all">
+                       <div className="w-12 h-12 bg-amber-500 text-white rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                          <i className="fas fa-clock"></i>
+                       </div>
+                       <h5 className="font-black text-slate-900 uppercase text-xs tracking-widest">{d.contact_hub.hours}</h5>
+                       <p className="text-xs text-slate-500 font-bold leading-relaxed">{d.contact_hub.hours_detail}</p>
+                    </div>
+                 </div>
+
+                 <button onClick={() => window.open('https://wa.me/6281234567890')} className="w-full py-6 bg-emerald-600 text-white rounded-3xl font-black text-sm uppercase tracking-widest shadow-2xl shadow-emerald-100 hover:bg-emerald-700 transition-all flex items-center justify-center gap-4 active:scale-95">
+                    <i className="fab fa-whatsapp text-2xl"></i>
+                    {d.contact_hub.btn_wa}
+                 </button>
+              </div>
+
+              <div className="relative group">
+                 <div className="absolute inset-0 bg-indigo-600/5 blur-[120px] rounded-full -z-10 group-hover:bg-indigo-600/10 transition-all"></div>
+                 <div className="bg-white p-4 rounded-[56px] border border-slate-100 shadow-2xl h-full min-h-[500px] overflow-hidden">
+                    <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+                       <h4 className="font-black text-slate-900 uppercase tracking-tighter text-sm">{d.contact_hub.map_title}</h4>
+                       <i className="fas fa-earth-asia text-indigo-400"></i>
+                    </div>
+                    {/* Google Maps Iframe showing Banda Aceh area for context */}
+                    <iframe 
+                      title="Seulanga HQ Map"
+                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15883.670390230232!2d95.311749!3d5.558253!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x304037146598c19b%3A0xc3b839b8979e2764!2sBanda%20Aceh%2C%20Aceh!5e0!3m2!1sen!2sid!4v1703914442145!5m2!1sen!2sid" 
+                      className="w-full h-full border-none opacity-90 group-hover:opacity-100 transition-opacity grayscale-[0.2] group-hover:grayscale-0"
+                      allowFullScreen={true} 
+                      loading="lazy" 
+                      referrerPolicy="no-referrer-when-downgrade"
+                    ></iframe>
+                 </div>
+              </div>
+           </div>
+        </div>
+      </section>
+
       {/* 8. Trust & Credibility Section */}
-      <section className="py-32 bg-white overflow-hidden">
+      <section className="py-32 bg-slate-50 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
            <div className="grid lg:grid-cols-2 gap-24 items-center">
               <div className="space-y-12">
@@ -420,7 +517,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, onSelectPr
                       { title: "Audit Trail", desc: "Immutable transaction history nodes.", icon: "fa-fingerprint" },
                     ].map((s, i) => (
                       <div key={i} className="space-y-3">
-                         <div className="w-12 h-12 bg-slate-50 text-indigo-600 rounded-2xl flex items-center justify-center border border-slate-100">
+                         <div className="w-12 h-12 bg-white text-indigo-600 rounded-2xl flex items-center justify-center border border-slate-100 shadow-sm">
                             <i className={`fas ${s.icon}`}></i>
                          </div>
                          <h5 className="font-black text-slate-900 uppercase text-xs tracking-widest">{s.title}</h5>
@@ -430,14 +527,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, onSelectPr
                  </div>
               </div>
 
-              <div className="bg-slate-50 p-12 rounded-[64px] border border-slate-100 relative">
-                 <i className="fas fa-quote-left absolute top-12 left-12 text-slate-100 text-8xl -z-0"></i>
+              <div className="bg-white p-12 rounded-[64px] border border-slate-100 relative shadow-xl">
+                 <i className="fas fa-quote-left absolute top-12 left-12 text-slate-50 text-8xl -z-0"></i>
                  <div className="relative z-10 space-y-10">
                     <p className="text-2xl text-slate-800 font-bold italic leading-relaxed">
                        "SEULANGA has unified our homestay operations across 12 locations. The automated payout protocol and staff check-in features are absolute game-changers for our growth."
                     </p>
                     <div className="flex items-center gap-6 pt-6 border-t border-slate-200">
-                       <img src="https://i.pravatar.cc/150?u=saas_owner" className="w-16 h-16 rounded-[24px] object-cover shadow-lg border-4 border-white" />
+                       <img src="https://i.pravatar.cc/150?u=saas_owner" className="w-16 h-16 rounded-[24px] object-cover shadow-lg border-4 border-white" alt="avatar" />
                        <div>
                           <p className="font-black text-slate-900 uppercase tracking-tight">John Proprietor</p>
                           <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Founder, Grand Vista Resort Node</p>
