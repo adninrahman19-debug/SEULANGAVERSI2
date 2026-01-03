@@ -228,6 +228,18 @@ export interface Business {
   socials?: {
     instagram?: string;
     website?: string;
+    facebook?: string;
+    twitter?: string;
+  };
+  operatingHours?: {
+    open: string;
+    close: string;
+    days: string;
+  };
+  seoMetadata?: {
+    title: string;
+    description: string;
+    keywords: string;
   };
 }
 
@@ -247,6 +259,7 @@ export interface Unit {
   policies?: {
     cancellation: string;
     checkIn: string;
+    checkOut?: string;
   };
 }
 
@@ -295,6 +308,19 @@ export interface Promotion {
   type: 'percentage' | 'fixed';
   startDate: string;
   endDate: string;
+  isActive: boolean;
+  description?: string;
+}
+
+export interface PricingRule {
+  id: string;
+  businessId: string;
+  name: string;
+  type: 'seasonal' | 'weekend' | 'bulk';
+  adjustmentType: 'percentage' | 'fixed';
+  value: number; // Positive for markup, negative for discount
+  startDate?: string;
+  endDate?: string;
   isActive: boolean;
 }
 
