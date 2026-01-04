@@ -68,6 +68,7 @@ export const Layout: React.FC<LayoutProps> = ({
         { id: 'security', label: 'Security Alpha', icon: 'fa-shield-halved' },
         { id: 'quality', label: 'Marketplace Hub', icon: 'fa-certificate' },
         { id: 'accounts', label: 'Global ID Matrix', icon: 'fa-users-gear' },
+        { id: 'settings', label: 'System Cockpit', icon: 'fa-gears' },
       ]
     }
   ];
