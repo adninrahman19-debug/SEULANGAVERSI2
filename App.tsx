@@ -3,10 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { Layout } from './components/Layout';
 import { User, UserRole, Business, CategoryModuleConfig } from './types';
 import { LandingPage } from './views/LandingPage';
-import { OwnerDashboard } from './views/OwnerDashboard';
-import { SuperAdminDashboard } from './views/SuperAdminDashboard';
-import { StaffDashboard } from './views/StaffDashboard';
-import { GuestDashboard } from './views/GuestDashboard';
+import { Dashboard as OwnerDashboard } from './views/owner/Dashboard';
+import { SuperAdminDashboard } from './views/super-admin/Dashboard';
+import { Dashboard as StaffDashboard } from './views/staff/Dashboard';
+import { Dashboard as GuestDashboard } from './views/guest/Dashboard';
 import { PropertyDetail } from './views/PropertyDetail';
 import { Marketplace } from './views/Marketplace';
 import { Auth } from './views/Auth';
@@ -82,7 +82,6 @@ const App: React.FC = () => {
     } else if (view === 'super-admin' && !subView) {
       setAdminSubView('overview');
     }
-    // Set auto-scrolling to top on navigation
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -111,7 +110,6 @@ const App: React.FC = () => {
   const renderView = () => {
     switch (currentView) {
       case 'landing':
-        // Landing page handles its own navigation and structure
         return (
           <LandingPage 
             onNavigate={handleNavigate} 
@@ -157,7 +155,6 @@ const App: React.FC = () => {
     }
   };
 
-  // Skip Layout wrapping for landing page and auth views to allow full-width marketing design
   if (currentView === 'landing' || currentView === 'login' || currentView === 'register') {
     return renderView();
   }
