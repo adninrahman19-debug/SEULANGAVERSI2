@@ -17,6 +17,9 @@ import { PaymentManagement } from './owner/PaymentManagement';
 import { MarketingHub } from './owner/MarketingHub';
 import { InternalUserManagement } from './owner/InternalUserManagement';
 import { ReviewManagement } from './owner/ReviewManagement';
+import { ReportsAnalytics } from './owner/ReportsAnalytics';
+import { SubscriptionBilling } from './owner/SubscriptionBilling';
+import { NotificationLogs } from './owner/NotificationLogs';
 
 const revenueTrendData = [
   { name: 'Jul', revenue: 45000000, occupancy: 78, bookings: 42 },
@@ -27,7 +30,7 @@ const revenueTrendData = [
   { name: 'Dec', revenue: 78000000, occupancy: 95, bookings: 72 },
 ];
 
-type ModuleType = 'overview' | 'revenue-intel' | 'bookings' | 'inventory' | 'team' | 'finance' | 'profile' | 'reviews' | 'guests' | 'marketing';
+type ModuleType = 'overview' | 'revenue-intel' | 'bookings' | 'inventory' | 'team' | 'finance' | 'profile' | 'reviews' | 'guests' | 'marketing' | 'reports' | 'subscription' | 'logs';
 
 interface OwnerDashboardProps {
   businessId: string;
@@ -72,6 +75,9 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
       { id: 'team', label: 'Manajemen Tim', icon: 'fa-users-gear', module: SystemModule.TEAM },
       { id: 'finance', label: 'Settlement Hub', icon: 'fa-vault', module: SystemModule.PAYMENT },
       { id: 'reviews', label: 'Ulasan Tamu', icon: 'fa-star', module: SystemModule.REVIEWS },
+      { id: 'reports', label: 'Reports & Analytics', icon: 'fa-chart-mixed', module: null },
+      { id: 'logs', label: 'Activity & System Logs', icon: 'fa-clipboard-list', module: null },
+      { id: 'subscription', label: 'Billing & Plan', icon: 'fa-gem', module: null },
       { id: 'profile', label: 'Profil Bisnis', icon: 'fa-id-card', module: null },
     ];
     return items.filter(item => !item.module || activeModules.includes(item.module));
@@ -253,8 +259,26 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
                   businessId={business.id} 
                 />
               )}
+              {activeModule === 'reports' && (
+                <ReportsAnalytics 
+                  business={business}
+                  bookings={bookings}
+                  units={units}
+                />
+              )}
+              {activeModule === 'subscription' && (
+                <SubscriptionBilling 
+                  business={business}
+                  onUpdateBusiness={handleUpdateBusiness}
+                />
+              )}
+              {activeModule === 'logs' && (
+                <NotificationLogs 
+                  businessId={business.id}
+                />
+              )}
               
-              {!['overview', 'revenue-intel', 'team', 'profile', 'inventory', 'bookings', 'guests', 'finance', 'marketing', 'reviews'].includes(activeModule) && (
+              {!['overview', 'revenue-intel', 'team', 'profile', 'inventory', 'bookings', 'guests', 'finance', 'marketing', 'reviews', 'reports', 'subscription', 'logs'].includes(activeModule) && (
                  <div className="py-40 text-center animate-fade-up">
                     <div className="w-24 h-24 bg-slate-50 text-slate-300 rounded-[40px] flex items-center justify-center mx-auto mb-10 text-4xl shadow-inner border border-white">
                        <i className="fas fa-layer-group"></i>
