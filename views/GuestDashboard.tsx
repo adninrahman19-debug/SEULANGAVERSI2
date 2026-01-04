@@ -3,15 +3,19 @@ import React, { useState } from 'react';
 import { User, Booking, BookingStatus } from '../types';
 import { MOCK_BOOKINGS, MOCK_BUSINESSES, MOCK_USERS } from '../constants';
 import { GuestHome } from './guest/GuestHome';
-import { IdentityHub } from './guest/IdentityHub';
 import { VoucherWallet } from './guest/VoucherWallet';
 import { InquiryHub } from './guest/InquiryHub';
-import { PropertyWishlist } from './guest/PropertyWishlist';
+import { WishlistFavorites } from './guest/WishlistFavorites';
 import { PropertyDiscovery } from './guest/PropertyDiscovery';
 import { BookingProtocol } from './guest/BookingProtocol';
 import { PaymentTreasury } from './guest/PaymentTreasury';
+import { BookingHistory } from './guest/BookingHistory';
+import { ProfileManager } from './guest/ProfileManager';
+import { ReviewReputation } from './guest/ReviewReputation';
+import { CommunicationHub } from './guest/CommunicationHub';
+import { SupportCenter } from './guest/SupportCenter';
 
-type GuestTab = 'overview' | 'discovery' | 'bookings' | 'payments' | 'inquiries' | 'wishlist' | 'rewards' | 'profile';
+type GuestTab = 'overview' | 'discovery' | 'bookings' | 'history' | 'payments' | 'reviews' | 'messages' | 'inquiries' | 'wishlist' | 'rewards' | 'profile' | 'support';
 
 interface GuestDashboardProps {
   currentUser: User | null;
@@ -35,11 +39,15 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
       tab_overview: "Beranda",
       tab_discovery: "Eksplorasi",
       tab_bookings: "Reservasi",
+      tab_history: "Riwayat",
       tab_payments: "Treasury",
+      tab_reviews: "Reputasi",
+      tab_messages: "Pesan",
       tab_inquiries: "Inquiry",
       tab_wishlist: "Simpan",
       tab_rewards: "Voucher",
-      tab_profile: "Akun"
+      tab_profile: "Identitas",
+      tab_support: "Bantuan"
     },
     en: {
       search_p: "Search hotels, boarding, or houses...",
@@ -49,11 +57,15 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
       tab_overview: "Home",
       tab_discovery: "Explore",
       tab_bookings: "Bookings",
+      tab_history: "History",
       tab_payments: "Payments",
+      tab_reviews: "Reputation",
+      tab_messages: "Messages",
       tab_inquiries: "Inquiry",
       tab_wishlist: "Saved",
       tab_rewards: "Rewards",
-      tab_profile: "Account"
+      tab_profile: "Identity",
+      tab_support: "Support"
     }
   }[language];
 
@@ -62,11 +74,15 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
       case 'overview': return <GuestHome user={user} onNavigate={onNavigate} onSelectTab={(t) => setActiveTab(t as GuestTab)} />;
       case 'discovery': return <PropertyDiscovery onSelectProperty={(biz) => onNavigate('property-detail')} language={language} />;
       case 'bookings': return <BookingProtocol currentUser={user} language={language} />;
+      case 'history': return <BookingHistory currentUser={user} language={language} />;
       case 'payments': return <PaymentTreasury currentUser={user} language={language} />;
-      case 'wishlist': return <PropertyWishlist onSelect={() => onNavigate('property-detail')} />;
+      case 'reviews': return <ReviewReputation currentUser={user} language={language} />;
+      case 'messages': return <CommunicationHub currentUser={user} language={language} />;
+      case 'wishlist': return <WishlistFavorites user={user} onNavigate={onNavigate} language={language} />;
       case 'inquiries': return <InquiryHub />;
       case 'rewards': return <VoucherWallet language={language} />;
-      case 'profile': return <IdentityHub user={user} onUpdate={onUpdateUser} />;
+      case 'profile': return <ProfileManager user={user} onUpdate={onUpdateUser} language={language} />;
+      case 'support': return <SupportCenter currentUser={user} language={language} />;
       default: return <GuestHome user={user} onNavigate={onNavigate} onSelectTab={(t) => setActiveTab(t as GuestTab)} />;
     }
   };
@@ -96,8 +112,11 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
            </div>
 
            <div className="flex items-center gap-2 md:gap-4 shrink-0">
-              <button className="w-10 h-10 md:w-11 md:h-11 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-indigo-600 transition-all relative">
-                 <i className="fas fa-bell"></i>
+              <button 
+                onClick={() => setActiveTab('messages')}
+                className="w-10 h-10 md:w-11 md:h-11 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-indigo-600 transition-all relative"
+              >
+                 <i className="fas fa-comment-dots"></i>
                  <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white"></span>
               </button>
               <div className="w-px h-6 md:h-8 bg-slate-200 mx-1"></div>
@@ -140,10 +159,13 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
               { id: 'overview', label: d.tab_overview, icon: 'fa-house' },
               { id: 'discovery', label: d.tab_discovery, icon: 'fa-compass' },
               { id: 'bookings', label: d.tab_bookings, icon: 'fa-receipt' },
+              { id: 'history', label: d.tab_history, icon: 'fa-clock-rotate-left' },
               { id: 'payments', label: d.tab_payments, icon: 'fa-vault' },
-              { id: 'inquiries', label: d.tab_inquiries, icon: 'fa-comment-dots' },
+              { id: 'reviews', label: d.tab_reviews, icon: 'fa-star' },
+              { id: 'messages', label: d.tab_messages, icon: 'fa-comment-dots' },
               { id: 'wishlist', label: d.tab_wishlist, icon: 'fa-heart' },
               { id: 'rewards', label: d.tab_rewards, icon: 'fa-sparkles' },
+              { id: 'support', label: d.tab_support, icon: 'fa-circle-question' },
               { id: 'profile', label: d.tab_profile, icon: 'fa-user-circle' },
             ].map(tab => (
               <button
@@ -178,7 +200,7 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
                      <h3 className="text-2xl md:text-3xl font-black text-slate-900 uppercase tracking-tighter mb-2">{d.help_title}</h3>
                      <p className="text-slate-500 font-medium leading-relaxed max-w-lg">{d.help_sub}</p>
                   </div>
-                  <button className="md:ml-auto w-full md:w-auto px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-100">
+                  <button onClick={() => setActiveTab('support')} className="md:ml-auto w-full md:w-auto px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-100">
                      Pusat Bantuan
                   </button>
                </div>
@@ -212,7 +234,7 @@ export const GuestDashboard: React.FC<GuestDashboardProps> = ({ currentUser, onU
            { id: 'overview', label: d.tab_overview, icon: 'fa-house' },
            { id: 'discovery', label: d.tab_discovery, icon: 'fa-compass' },
            { id: 'bookings', label: d.tab_bookings, icon: 'fa-receipt' },
-           { id: 'payments', label: d.tab_payments, icon: 'fa-vault' },
+           { id: 'support', label: d.tab_support, icon: 'fa-circle-question' },
            { id: 'profile', label: d.tab_profile, icon: 'fa-user-circle' },
          ].map(tab => (
             <button 

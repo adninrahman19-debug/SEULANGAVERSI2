@@ -1,3 +1,4 @@
+
 export enum UserRole {
   SUPER_ADMIN = 'SUPER_ADMIN',
   BUSINESS_OWNER = 'BUSINESS_OWNER',
@@ -57,6 +58,29 @@ export enum UnitStatus {
   CLEANING = 'Cleaning',
   MAINTENANCE = 'Maintenance',
   BLOCKED = 'Blocked'
+}
+
+// --- MESSAGING TYPES ---
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderRole: UserRole;
+  content: string;
+  timestamp: string;
+  type: 'text' | 'file' | 'image';
+  fileUrl?: string;
+  isRead: boolean;
+}
+
+export interface ChatThread {
+  id: string;
+  businessId: string;
+  businessName: string;
+  lastMessage: string;
+  lastTimestamp: string;
+  unreadCount: number;
+  messages: ChatMessage[];
 }
 
 export interface SEOMetadata {

@@ -1,5 +1,5 @@
 
-import { UserRole, BusinessCategory, SystemModule, CategoryModuleConfig, SubscriptionPlan, User, Business, Unit, Booking, BookingStatus, Transaction, AuditLog, VerificationStatus, AppNotification, Review, Promotion, UnitStatus, MaintenanceTicket } from './types';
+import { UserRole, BusinessCategory, SystemModule, CategoryModuleConfig, SubscriptionPlan, User, Business, Unit, Booking, BookingStatus, Transaction, AuditLog, VerificationStatus, AppNotification, Review, Promotion, UnitStatus, MaintenanceTicket, ChatThread } from './types';
 
 export const APP_NAME = "SEULANGA";
 
@@ -34,7 +34,8 @@ export const TRANSLATIONS = {
     active_tenants: "Tenant Aktif",
     revenue_net: "Pendapatan Bersih",
     platform_gtv: "Total Nilai Transaksi",
-    security_health: "Kesehatan Keamanan"
+    security_health: "Kesehatan Keamanan",
+    messaging: "Pesan Node"
   },
   en: {
     dashboard: "Dashboard",
@@ -57,9 +58,37 @@ export const TRANSLATIONS = {
     active_tenants: "Active Tenants",
     revenue_net: "Revenue Net",
     platform_gtv: "Platform GTV",
-    security_health: "Security Health"
+    security_health: "Security Health",
+    messaging: "Node Messages"
   }
 };
+
+export const MOCK_CHAT_THREADS: ChatThread[] = [
+  {
+    id: 'th-1',
+    businessId: 'b1',
+    businessName: 'Grand Seulanga Hotel',
+    lastMessage: 'Tentu, handuk tambahan segera dikirim.',
+    lastTimestamp: '10:30 AM',
+    unreadCount: 1,
+    messages: [
+      { id: 'm1', senderId: 'u4', senderName: 'Alice Guest', senderRole: UserRole.GUEST, content: 'Bisa minta handuk tambahan untuk unit 201?', timestamp: '10:25 AM', type: 'text', isRead: true },
+      { id: 'm2', senderId: 'u3', senderName: 'Sarah Staff', senderRole: UserRole.ADMIN_STAFF, content: 'Tentu, handuk tambahan segera dikirim.', timestamp: '10:30 AM', type: 'text', isRead: false },
+    ]
+  },
+  {
+    id: 'th-2',
+    businessId: 'b2',
+    businessName: 'Pine Hill Guesthouse',
+    lastMessage: 'Foto unit sudah saya terima, terima kasih.',
+    lastTimestamp: 'Yesterday',
+    unreadCount: 0,
+    messages: [
+      { id: 'm3', senderId: 'u5', senderName: 'Budi Santoso', senderRole: UserRole.ADMIN_STAFF, content: 'Selamat siang, ada yang bisa dibantu?', timestamp: '09:00 AM', type: 'text', isRead: true },
+      { id: 'm4', senderId: 'u4', senderName: 'Alice Guest', senderRole: UserRole.GUEST, content: 'Foto unit sudah saya terima, terima kasih.', timestamp: '09:15 AM', type: 'text', isRead: true },
+    ]
+  }
+];
 
 export const MOCK_PROMOTIONS: Promotion[] = [
   { id: 'promo1', businessId: 'b1', code: 'NEWYEAR2024', discountValue: 15, type: 'percentage', startDate: '2024-01-01', endDate: '2024-01-31', isActive: true },
