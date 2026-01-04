@@ -50,7 +50,8 @@ export const Layout: React.FC<LayoutProps> = ({
       items: [
         { id: 'overview', label: 'Ecosystem Monitor', icon: 'fa-globe' },
         { id: 'tenants', label: 'Tenant Governance', icon: 'fa-building-shield' },
-        { id: 'oversight', label: 'Dispute Resolution', icon: 'fa-scale-balanced' },
+        { id: 'oversight', label: 'Risk Radar', icon: 'fa-shield-virus' },
+        { id: 'trust', label: 'Trust & Reputation', icon: 'fa-gavel' },
       ]
     },
     {
@@ -65,7 +66,7 @@ export const Layout: React.FC<LayoutProps> = ({
       group: "Platform Integrity",
       items: [
         { id: 'security', label: 'Security Alpha', icon: 'fa-shield-halved' },
-        { id: 'quality', label: 'Quality Audit', icon: 'fa-certificate' },
+        { id: 'quality', label: 'Marketplace Hub', icon: 'fa-certificate' },
         { id: 'accounts', label: 'Global ID Matrix', icon: 'fa-users-gear' },
       ]
     }

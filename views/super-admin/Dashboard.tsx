@@ -1,15 +1,19 @@
 
 import React, { useState } from 'react';
-import { User, CategoryModuleConfig, BusinessStatus } from '../../types';
+import { User, CategoryModuleConfig, BusinessStatus, Business } from '../../types';
 import { MOCK_BUSINESSES, MOCK_TRANSACTIONS, MOCK_USERS, MOCK_BOOKINGS } from '../../constants';
 import { GlobalOverview } from './GlobalOverview';
 import { TenantGovernance } from './TenantGovernance';
 import { FlexEngine } from './FlexEngine';
 import { IdentityMatrix } from './IdentityMatrix';
 import { BookingOversight } from './BookingOversight';
+import { MonetizationCenter } from './MonetizationCenter';
+import { BillingMatrix } from './BillingMatrix';
+import { MarketplaceContentControl } from './MarketplaceContentControl';
+import { TrustCenter } from './TrustCenter';
 
 interface SuperAdminDashboardProps {
-  activeTab: 'overview' | 'tenants' | 'engine' | 'analytics' | 'finance' | 'security' | 'settings' | 'oversight' | 'monetization' | 'quality' | 'accounts';
+  activeTab: 'overview' | 'tenants' | 'engine' | 'analytics' | 'finance' | 'security' | 'settings' | 'oversight' | 'monetization' | 'quality' | 'accounts' | 'trust';
   onNavigate: (view: string, subView?: string) => void;
   language: 'id' | 'en';
   moduleConfigs: CategoryModuleConfig;
@@ -36,7 +40,13 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   currentUser,
   onUpdateUser
 }) => {
-  const [businesses, setBusinesses] = useState(MOCK_BUSINESSES);
+  const [businesses, setBusinesses] = useState<Business[]>(MOCK_BUSINESSES.map(b => ({
+    ...b,
+    subscriptionExpiry: '2025-12-31',
+    isTrial: false,
+    registrationDate: '2024-01-15',
+    penaltyCount: 0
+  })));
 
   const handleUpdateStatus = (id: string, status: BusinessStatus) => {
     setBusinesses(prev => prev.map(b => b.id === id ? { ...b, status } : b));
@@ -55,6 +65,10 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
     alert(`Topology update successful for Node ${id}.`);
   };
 
+  const handleUpdateBusiness = (id: string, data: Partial<Business>) => {
+    setBusinesses(prev => prev.map(b => b.id === id ? { ...b, ...data } : b));
+  };
+
   return (
     <div className="space-y-10 animate-fade-up">
       {/* Header Context (Internal to Main Content) */}
@@ -68,6 +82,10 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                {activeTab === 'overview' ? 'Ecosystem Monitor' : 
                 activeTab === 'accounts' ? 'ID Matrix' : 
                 activeTab === 'oversight' ? 'Risk & Oversight' :
+                activeTab === 'monetization' ? 'Treasury & Revenue' :
+                activeTab === 'finance' ? 'Subscription Hub' :
+                activeTab === 'quality' ? 'Marketplace Hub' :
+                activeTab === 'trust' ? 'Trust & Disputes' :
                 activeTab.replace('-', ' ')}
             </h1>
          </div>
@@ -119,8 +137,32 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
             businesses={businesses}
           />
         )}
+        {activeTab === 'monetization' && (
+          <MonetizationCenter 
+            transactions={MOCK_TRANSACTIONS}
+            businesses={businesses}
+          />
+        )}
+        {activeTab === 'finance' && (
+          <BillingMatrix 
+            businesses={businesses}
+            onUpdateBusiness={handleUpdateBusiness}
+          />
+        )}
+        {activeTab === 'quality' && (
+          <MarketplaceContentControl 
+            businesses={businesses}
+            onUpdateBusiness={handleUpdateBusiness}
+          />
+        )}
+        {activeTab === 'trust' && (
+          <TrustCenter 
+            businesses={businesses}
+            onUpdateBusiness={handleUpdateBusiness}
+          />
+        )}
         
-        {!['overview', 'tenants', 'engine', 'accounts', 'oversight'].includes(activeTab) && (
+        {!['overview', 'tenants', 'engine', 'accounts', 'oversight', 'monetization', 'finance', 'quality', 'trust'].includes(activeTab) && (
            <div className="bg-white p-20 rounded-[64px] border border-slate-100 shadow-sm min-h-[500px] flex flex-col items-center justify-center text-center space-y-8">
               <div className="w-32 h-32 bg-slate-50 text-slate-300 rounded-[40px] flex items-center justify-center text-5xl shadow-inner border border-slate-100">
                  <i className="fas fa-layer-group"></i>
