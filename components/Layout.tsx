@@ -52,6 +52,7 @@ export const Layout: React.FC<LayoutProps> = ({
         { id: 'tenants', label: 'Tenant Governance', icon: 'fa-building-shield' },
         { id: 'oversight', label: 'Risk Radar', icon: 'fa-shield-virus' },
         { id: 'trust', label: 'Trust & Reputation', icon: 'fa-gavel' },
+        { id: 'analytics', label: 'Strategic Intel', icon: 'fa-chart-mixed' },
       ]
     },
     {

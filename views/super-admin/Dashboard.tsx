@@ -13,6 +13,7 @@ import { MarketplaceContentControl } from './MarketplaceContentControl';
 import { TrustCenter } from './TrustCenter';
 import { PlatformAnalytics } from './PlatformAnalytics';
 import { SystemConfiguration } from './SystemConfiguration';
+import { SecurityAudit } from './SecurityAudit';
 
 interface SuperAdminDashboardProps {
   activeTab: 'overview' | 'tenants' | 'engine' | 'analytics' | 'finance' | 'security' | 'settings' | 'oversight' | 'monetization' | 'quality' | 'accounts' | 'trust';
@@ -90,6 +91,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                 activeTab === 'trust' ? 'Trust & Disputes' :
                 activeTab === 'analytics' ? 'Strategic Intelligence' :
                 activeTab === 'settings' ? 'System Cockpit' :
+                activeTab === 'security' ? 'Cyber Shield' :
                 activeTab.replace('-', ' ')}
             </h1>
          </div>
@@ -175,8 +177,11 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
         {activeTab === 'settings' && (
           <SystemConfiguration />
         )}
+        {activeTab === 'security' && (
+          <SecurityAudit />
+        )}
         
-        {!['overview', 'tenants', 'engine', 'accounts', 'oversight', 'monetization', 'finance', 'quality', 'trust', 'analytics', 'settings'].includes(activeTab) && (
+        {!['overview', 'tenants', 'engine', 'accounts', 'oversight', 'monetization', 'finance', 'quality', 'trust', 'analytics', 'settings', 'security'].includes(activeTab) && (
            <div className="bg-white p-20 rounded-[64px] border border-slate-100 shadow-sm min-h-[500px] flex flex-col items-center justify-center text-center space-y-8">
               <div className="w-32 h-32 bg-slate-50 text-slate-300 rounded-[40px] flex items-center justify-center text-5xl shadow-inner border border-slate-100">
                  <i className="fas fa-layer-group"></i>
